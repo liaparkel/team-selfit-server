@@ -14,4 +14,5 @@ import lombok.Setter;
 public class LoginInfo {
 	int memberId;
 	String pw;
+	String nickname;
 }
