@@ -13,6 +13,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 
 import com.oopsw.selfit.auth.user.CustomOAuth2User;
 import com.oopsw.selfit.auth.user.User;
+import com.oopsw.selfit.dto.LoginInfo;
+import com.oopsw.selfit.dto.Member;
 import com.oopsw.selfit.service.MemberService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 	private final MemberService memberService;
-	private final BCryptPasswordEncoder encoder;
 
 	@Override
 	public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -33,19 +34,21 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 	public CustomOAuth2User convertToCustomOAuth2User(Map<String, Object> attributes) {
 		String email = (String)attributes.get("email");
 
+		//회원가입 이력이 없는 경우 회원가입페이지로 유도
 		if (!memberService.isEmailExists(email)) {
 			RequestContextHolder.currentRequestAttributes()
-				.setAttribute("email", attributes.get("email"), RequestAttributes.SCOPE_SESSION);
+				.setAttribute("email", attributes.get("email"), RequestAttributes.SCOPE_REQUEST);
 
 			RequestContextHolder.currentRequestAttributes()
-				.setAttribute("name", attributes.get("name"), RequestAttributes.SCOPE_SESSION);
-			throw new OAuth2AuthenticationException("NEED_SIGNUP");
+				.setAttribute("name", attributes.get("name"), RequestAttributes.SCOPE_REQUEST);
+			throw new OAuth2AuthenticationException("회원가입 이력이 없습니다.");
 		}
 
-		int memberId = memberService.getLoginInfo(email).getMemberId();
+		LoginInfo loginInfo = memberService.getLoginInfo(email);
 		User user = User.builder()
-			.memberId(memberId)
+			.memberId(loginInfo.getMemberId())
 			.email(email)
+			.nickname(loginInfo.getNickname())
 			.build();
 		return new CustomOAuth2User(user, attributes);
 	}
