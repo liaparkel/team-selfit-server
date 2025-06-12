@@ -1,0 +1,53 @@
+server:
+  port: 8881
+
+spring:
+  application:
+    name: selfit
+
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://${DB_IP}:3306/${DB_NAME}?characterEncoding=UTF-8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    open-in-view: false
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+  thymeleaf:
+    prefix: classpath:/templates/html/
+    suffix: .html
+    cache: false
+    check-template-location: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_ID}
+            client-secret: ${GOOGLE_SECRET}
+            redirect-uri: "http://127.0.0.1:8881/login/oauth2/code/google"
+            scope:
+              - profile
+              - email
+mybatis:
+  mapper-locations: classpath:mappers/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+food:
+  base-url: http://api.data.go.kr/openapi/tn_pubr_public_nutri_process_info_api
+  key: ${FOODAPI_KEY}
+
+exercise:
+  base-url: https://api.odcloud.kr/api/15068730/v1/uddi:e57a5dba-bbbf-414e-a5cd-866c48378daa
+  key: ${EXERCISE_KEY}

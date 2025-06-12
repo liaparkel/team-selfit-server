@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oopsw.selfit.repository.ApiRepository">
+    <insert id="addFoodApi" parameterType="java.util.List">
+        INSERT INTO FOOD
+        (FOOD_CODE, FOOD_NAME, FOOD_WEIGHT, UNIT_KCAL)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.foodCd},
+            #{item.foodNm},
+            #{item.foodSize},
+            CAST(#{item.enerc} AS UNSIGNED)
+            )
+        </foreach>
+    </insert>
+    <select id="existFoodApi" resultType="int">
+        SELECT COUNT(1)
+        FROM FOOD
+        WHERE FOOD_CODE = #{foodCd}
+    </select>
+    <insert id="addExerciseApi" parameterType="java.util.List">
+        INSERT INTO EXERCISE
+        (EXERCISE_NAME, MET)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.exerciseName},
+            #{item.met}
+            )
+        </foreach>
+    </insert>
+    <select id="existExercise" resultType="int">
+        SELECT COUNT(1)
+        FROM EXERCISE
+        WHERE EXERCISE_NAME = #{exerciseName}
+          AND MET = #{met}
+    </select>
+</mapper>

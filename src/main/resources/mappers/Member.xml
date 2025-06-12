@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oopsw.selfit.repository.MemberRepository">
+
+    <select id="getPw">
+        SELECT PW
+        FROM MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </select>
+    <select id="getLoginInfo" resultType="com.oopsw.selfit.dto.LoginInfo">
+        SELECT MEMBER_ID, PW
+        FROM MEMBER
+        WHERE EMAIL = #{email}
+    </select>
+
+    <select id="checkExistEmail" resultType="String">
+        SELECT EMAIL
+        FROM MEMBER
+        WHERE EMAIL = #{email}
+    </select>
+
+    <select id="checkExistNickname" resultType="String">
+        SELECT NICKNAME
+        FROM MEMBER
+        WHERE NICKNAME = #{nickname};
+    </select>
+
+    <update id="setPw">
+        UPDATE MEMBER
+        SET PW = #{newPw}
+        WHERE MEMBER_ID = #{memberId}
+    </update>
+
+    <insert id="addMember" useGeneratedKeys="true" keyProperty="memberId">
+        INSERT INTO MEMBER (EMAIL, PW, NAME, NICKNAME, GENDER, BIRTHDAY,
+                            HEIGHT, WEIGHT, GOAL, JOIN_DATE, MEMBER_TYPE, PROFILE_IMG)
+        VALUES (#{email}, #{pw}, #{name}, #{nickname}, #{gender}, #{birthday},
+                #{height}, #{weight}, #{goal}, NOW(), #{memberType}, #{profileImg})
+    </insert>
+
+    <select id="getMember" resultType="com.oopsw.selfit.dto.Member">
+        SELECT MEMBER_ID,
+               EMAIL,
+               NAME,
+               NICKNAME,
+               GENDER,
+               BIRTHDAY,
+               HEIGHT,
+               WEIGHT,
+               GOAL,
+               JOIN_DATE,
+               MEMBER_TYPE,
+               PROFILE_IMG
+        FROM MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </select>
+
+    <update id="setMember">
+        UPDATE MEMBER
+        SET EMAIL       = #{email},
+            NAME        = #{name},
+            NICKNAME    = #{nickname},
+            GENDER      = #{gender},
+            BIRTHDAY    = #{birthday},
+            HEIGHT      = #{height},
+            WEIGHT      = #{weight},
+            GOAL        = #{goal},
+            PROFILE_IMG = #{profileImg}
+        WHERE MEMBER_ID = #{memberId}
+    </update>
+
+    <delete id="removeMember">
+        DELETE
+        FROM MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </delete>
+
+
+</mapper>

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oopsw.selfit.repository.BoardRepository">
+    <select id="getCategory" resultType="com.oopsw.selfit.dto.Board">
+        SELECT CATEGORY_ID, CATEGORY_NAME
+        FROM CATEGORY
+    </select>
+    <select id="getBoards"
+            parameterType="map"
+            resultType="com.oopsw.selfit.dto.Board">
+        SELECT
+        B.BOARD_ID,
+        B.BOARD_TITLE,
+        M.NICKNAME,
+        B.VIEW_COUNT,
+        B.CREATED_DATE,
+        C.CATEGORY_ID,
+        C.CATEGORY_NAME,
+        COUNT(*) OVER() AS totalCount
+        FROM BOARD B
+        JOIN MEMBER M ON B.MEMBER_ID = M.MEMBER_ID
+        JOIN CATEGORY C ON B.CATEGORY_ID = C.CATEGORY_ID
+        WHERE B.CATEGORY_ID = #{categoryId}
+        <if test="searchKeyword != null and searchKeyword != ''">
+            AND (
+            B.BOARD_TITLE LIKE CONCAT('%', #{searchKeyword}, '%')
+            OR B.BOARD_CONTENT LIKE CONCAT('%', #{searchKeyword}, '%')
+            )
+        </if>
+        <choose>
+            <when test="sortOrder == 'views'">
+                ORDER BY B.VIEW_COUNT DESC
+            </when>
+            <otherwise>
+                ORDER BY B.CREATED_DATE DESC
+            </otherwise>
+        </choose>
+        LIMIT #{limit}
+        OFFSET #{offset}
+    </select>
+
+    <select id="getBoard"
+            parameterType="com.oopsw.selfit.dto.Board"
+            resultType="com.oopsw.selfit.dto.Board">
+        SELECT B.BOARD_ID           AS boardId,
+               M.MEMBER_ID          AS memberId,
+               B.BOARD_TITLE        AS boardTitle,
+               B.BOARD_CONTENT      AS boardContent,
+               B.BOARD_IMG          AS boardImg,
+               M.NICKNAME           AS nickName,
+               B.VIEW_COUNT         AS viewCount,
+               B.CREATED_DATE       AS createdDate,
+               C.CATEGORY_NAME      AS categoryName,
+               COUNT(CM.COMMENT_ID) AS commentCount
+        FROM BOARD B
+                 JOIN
+             MEMBER M ON B.MEMBER_ID = M.MEMBER_ID
+                 JOIN
+             CATEGORY C ON B.CATEGORY_ID = C.CATEGORY_ID
+                 LEFT JOIN
+             COMMENTS CM ON B.BOARD_ID = CM.BOARD_ID
+        WHERE B.BOARD_ID = #{boardId}
+        GROUP BY B.BOARD_ID;
+    </select>
+
+    <!-- 게시글 수정용 데이터 조회 -->
+    <select id="getBoardUpdate"
+            parameterType="com.oopsw.selfit.dto.Board"
+            resultType="com.oopsw.selfit.dto.Board">
+        SELECT B.BOARD_TITLE        AS boardTitle,
+               C.CATEGORY_NAME      AS categoryName,
+               B.BOARD_CONTENT      AS boardContent,
+               COUNT(CM.COMMENT_ID) AS commentCount
+        FROM BOARD B
+                 JOIN MEMBER M ON B.MEMBER_ID = M.MEMBER_ID
+                 JOIN CATEGORY C ON B.CATEGORY_ID = C.CATEGORY_ID
+                 LEFT JOIN COMMENTS CM ON B.BOARD_ID = CM.BOARD_ID
+        WHERE B.BOARD_ID = #{boardId}
+        GROUP BY B.BOARD_ID, B.BOARD_TITLE, C.CATEGORY_NAME, B.BOARD_CONTENT
+    </select>
+
+    <select id="getBookmarks" resultType="com.oopsw.selfit.dto.Bookmark">
+        SELECT BM.BOARD_ID, B.BOARD_TITLE
+        FROM BOOKMARK BM
+                 JOIN BOARD B ON BM.BOARD_ID = B.BOARD_ID
+        WHERE BM.MEMBER_ID = #{memberId} LIMIT #{limit}
+        OFFSET #{offset}
+    </select>
+
+    <select id="getBookmarkCount" parameterType="com.oopsw.selfit.dto.Board" resultType="int">
+        SELECT COUNT(*)
+        FROM BOOKMARK
+        WHERE MEMBER_ID = #{memberId}
+          AND BOARD_ID = #{boardId}
+    </select>
+
+    <!-- 게시글 등록 -->
+    <insert id="addBoard" parameterType="com.oopsw.selfit.dto.Board">
+        INSERT INTO BOARD
+        (BOARD_TITLE, BOARD_CONTENT, VIEW_COUNT, CREATED_DATE, BOARD_IMG, CATEGORY_ID, MEMBER_ID)
+        VALUES (#{boardTitle}, #{boardContent}, 0, SYSDATE(), #{boardImg}, #{categoryId}, #{memberId})
+    </insert>
+
+    <insert id="addBookmark" parameterType="com.oopsw.selfit.dto.Board">
+        INSERT INTO BOOKMARK
+            (MEMBER_ID, BOARD_ID, BOOKMARK_AT)
+        VALUES (#{memberId}, #{boardId},
+                SYSDATE())
+    </insert>
+
+    <delete id="removeBookmark" parameterType="com.oopsw.selfit.dto.Board">
+        DELETE
+        FROM BOOKMARK
+        WHERE MEMBER_ID = #{memberId}
+          AND BOARD_ID = #{boardId}
+    </delete>
+
+    <!-- 게시글 수정 -->
+    <update id="setBoard" parameterType="com.oopsw.selfit.dto.Board">
+        UPDATE BOARD
+        SET BOARD_TITLE   = #{boardTitle},
+            BOARD_CONTENT = #{boardContent},
+            BOARD_IMG     = #{boardImg},
+            CATEGORY_ID   = #{categoryId}
+        WHERE BOARD_ID = #{boardId}
+    </update>
+
+    <delete id="removeBoard" parameterType="com.oopsw.selfit.dto.Board">
+        DELETE
+        FROM BOARD
+        WHERE BOARD_ID = #{boardId}
+    </delete>
+
+    <update id="setViewCount" parameterType="int">
+        UPDATE BOARD
+        SET VIEW_COUNT = VIEW_COUNT + 1
+        WHERE BOARD_ID = #{boardId}
+    </update>
+</mapper>
+

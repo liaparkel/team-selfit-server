@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oopsw.selfit.repository.DashboardRepository">
+
+    <select id="getBmr" parameterType="int" resultType="com.oopsw.selfit.dto.Member">
+        SELECT MEMBER_ID, GENDER, BIRTHDAY, HEIGHT, WEIGHT
+        FROM MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </select>
+    <select id="getIntakeKcal" parameterType="com.oopsw.selfit.dto.Food" resultType="com.oopsw.selfit.dto.Food">
+        SELECT FN.INTAKE_DATE      AS intakeDate,
+               SUM(FI.intake_kcal) AS intakeSum
+        FROM FOOD_NOTE FN
+                 JOIN food_infos FI ON FN.FOOD_NOTE_ID = FI.food_note_id
+        WHERE FN.MEMBER_ID = #{memberId}
+          AND FN.INTAKE_DATE = #{intakeDate}
+    </select>
+    <select id="getExerciseKcal" parameterType="com.oopsw.selfit.dto.Exercise"
+            resultType="com.oopsw.selfit.dto.Exercise">
+        SELECT EN.EXERCISE_DATE      AS exerciseDate,
+               SUM(EI.exercise_kcal) AS exerciseSum
+        FROM EXERCISE_NOTE EN
+                 JOIN exercise_infos EI ON EN.EXERCISE_NOTE_ID = EI.exercise_note_id
+        WHERE EN.MEMBER_ID = #{memberId}
+          AND EN.EXERCISE_DATE = #{exerciseDate}
+    </select>
+    <select id="getYearIntakeKcal" parameterType="map" resultType="com.oopsw.selfit.dto.Food">
+        SELECT FN.INTAKE_DATE      AS intakeDate,
+               SUM(FI.intake_kcal) AS intakeSum
+        FROM FOOD_NOTE FN
+                 JOIN food_infos FI ON FN.FOOD_NOTE_ID = FI.food_note_id
+        WHERE FN.MEMBER_ID = #{memberId}
+                  AND YEAR (FN.INTAKE_DATE) = #{intakeYear}
+        GROUP BY FN.INTAKE_DATE
+        ORDER BY FN.INTAKE_DATE
+    </select>
+    <select id="getYearExerciseKcal" parameterType="map" resultType="com.oopsw.selfit.dto.Exercise">
+        SELECT EN.EXERCISE_DATE      AS exerciseDate,
+               SUM(EI.exercise_kcal) AS exerciseSum
+        FROM EXERCISE_NOTE EN
+                 JOIN exercise_infos EI ON EN.EXERCISE_NOTE_ID = EI.exercise_note_id
+        WHERE EN.MEMBER_ID = #{memberId}
+                  AND YEAR (EN.EXERCISE_DATE) = #{exerciseYear}
+        GROUP BY EN.EXERCISE_DATE
+        ORDER BY EN.EXERCISE_DATE
+    </select>
+    <insert id="addFoodList" parameterType="com.oopsw.selfit.dto.Food" useGeneratedKeys="true" keyProperty="foodNoteId">
+        INSERT INTO FOOD_NOTE (INTAKE_DATE, MEMBER_ID)
+        VALUES (#{intakeDate}, #{memberId})
+    </insert>
+
+    <delete id="removeFoodList" parameterType="com.oopsw.selfit.dto.Food">
+        DELETE
+        FROM FOOD_NOTE
+        WHERE MEMBER_ID = #{memberId}
+          AND INTAKE_DATE = #{intakeDate}
+    </delete>
+    <insert id="addExerciseList" parameterType="com.oopsw.selfit.dto.Exercise" useGeneratedKeys="true"
+            keyProperty="exerciseNoteId">
+        INSERT INTO EXERCISE_NOTE (EXERCISE_DATE, MEMBER_ID)
+        VALUES (#{exerciseDate}, #{memberId})
+    </insert>
+
+    <delete id="removeExerciseList" parameterType="com.oopsw.selfit.dto.Exercise">
+        DELETE
+        FROM EXERCISE_NOTE
+        WHERE MEMBER_ID = #{memberId}
+          AND EXERCISE_DATE = #{exerciseDate}
+    </delete>
+    <select id="getCheckList" parameterType="com.oopsw.selfit.dto.Checklist"
+            resultType="com.oopsw.selfit.dto.Checklist">
+        SELECT CI.CHECK_ID      AS checkId,
+               CI.CHECKLIST_ID  AS checklistId,
+               CI.CHECK_CONTENT AS checkContent,
+               CI.IS_CHECK      AS isCheck
+        FROM CHECKLIST CL
+                 JOIN check_items CI ON CL.CHECKLIST_ID = CI.checklist_id
+        WHERE CL.MEMBER_ID = #{memberId}
+          AND CL.CHECK_DATE = #{checkDate}
+        ORDER BY CI.CHECK_ID
+    </select>
+    <insert id="addChecklist" parameterType="com.oopsw.selfit.dto.Checklist" useGeneratedKeys="true"
+            keyProperty="checklistId">
+        INSERT INTO CHECKLIST (CHECK_DATE, MEMBER_ID)
+        VALUES (#{checkDate}, #{memberId})
+    </insert>
+    <select id="getGoal" parameterType="Integer" resultType="String">
+        SELECT GOAL
+        FROM MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </select>
+    <select id="getYearExerciseAvgAll" parameterType="map" resultType="map">
+        SELECT T.EXERCISE_DATE, AVG(T.daily_sum) AS avgKcal
+        FROM (SELECT EN.MEMBER_ID, EN.EXERCISE_DATE, SUM(EI.exercise_kcal) AS daily_sum
+              FROM EXERCISE_NOTE EN
+                       JOIN exercise_infos EI ON EN.EXERCISE_NOTE_ID = EI.exercise_note_id
+                       JOIN MEMBER M ON EN.MEMBER_ID = M.MEMBER_ID
+              WHERE M.GOAL = (SELECT GOAL FROM MEMBER WHERE MEMBER_ID = #{memberId})
+                        AND M.GENDER = (SELECT GENDER FROM MEMBER WHERE MEMBER_ID = #{memberId})
+                        AND TIMESTAMPDIFF(YEAR, M.BIRTHDAY, CURDATE()) BETWEEN #{minAge} AND #{maxAge}
+                        AND M.HEIGHT BETWEEN #{heightMin} AND #{heightMax}
+                        AND M.WEIGHT BETWEEN #{weightMin} AND #{weightMax}
+                        AND YEAR (EN.EXERCISE_DATE) = #{exerciseYear}
+        GROUP BY EN.MEMBER_ID, EN.EXERCISE_DATE
+            ) AS T
+        GROUP BY T.EXERCISE_DATE
+    </select>
+    <select id="getYearIntakeAvgAll" parameterType="map" resultType="map">
+        SELECT T.INTAKE_DATE AS intakeDate, AVG(T.daily_sum) AS avgIntakeKcal
+        FROM (SELECT FN.MEMBER_ID, FN.INTAKE_DATE, SUM(FI.intake_kcal) AS daily_sum
+              FROM FOOD_NOTE FN
+                       JOIN food_infos FI ON FN.FOOD_NOTE_ID = FI.food_note_id
+                       JOIN MEMBER M ON FN.MEMBER_ID = M.MEMBER_ID
+              WHERE M.GOAL = (SELECT GOAL FROM MEMBER WHERE MEMBER_ID = #{memberId})
+                        AND M.GENDER = (SELECT GENDER FROM MEMBER WHERE MEMBER_ID = #{memberId})
+                        AND TIMESTAMPDIFF(YEAR, M.BIRTHDAY, CURDATE()) BETWEEN #{minAge} AND #{maxAge}
+                        AND M.HEIGHT BETWEEN #{heightMin} AND #{heightMax}
+                        AND M.WEIGHT BETWEEN #{weightMin} AND #{weightMax}
+                        AND YEAR (FN.INTAKE_DATE) = #{intakeYear}
+        GROUP BY FN.MEMBER_ID, FN.INTAKE_DATE
+            ) AS T
+        GROUP BY T.INTAKE_DATE
+    </select>
+    <select id="isChecklist" parameterType="map" resultType="int">
+        SELECT COUNT(1)
+        FROM CHECKLIST
+        WHERE MEMBER_ID = #{memberId}
+          AND CHECK_DATE = #{checkDate}
+    </select>
+    <select id="isFoodNote" parameterType="map" resultType="int">
+        SELECT COUNT(1)
+        FROM FOOD_NOTE
+        WHERE MEMBER_ID = #{memberId}
+          AND INTAKE_DATE = #{intakeDate}
+    </select>
+    <select id="isExerciseNote" parameterType="map" resultType="int">
+        SELECT COUNT(1)
+        FROM EXERCISE_NOTE
+        WHERE MEMBER_ID = #{memberId}
+          AND EXERCISE_DATE = #{exerciseDate}
+    </select>
+    <select id="getWeight" parameterType="int" resultType="int">
+        SELECT M.WEIGHT
+        FROM EXERCISE_NOTE EN
+                 INNER JOIN MEMBER M ON EN.MEMBER_ID = M.MEMBER_ID
+        WHERE EN.EXERCISE_NOTE_ID = #{exerciseNoteId}
+    </select>
+    <select id="getFoodNoteId" parameterType="com.oopsw.selfit.dto.Food" resultType="Integer">
+        SELECT FOOD_NOTE_ID AS foodNoteId
+        FROM FOOD_NOTE
+        WHERE INTAKE_DATE=#{intakeDate} AND MEMBER_ID=#{memberId}
+        LIMIT 1
+    </select>
+    <select id="getExerciseNoteId" parameterType="com.oopsw.selfit.dto.Exercise" resultType="Integer">
+        SELECT Exercise_NOTE_ID AS exerciseNoteId
+        FROM EXERCISE_NOTE
+        WHERE EXERCISE_DATE=#{exerciseDate} AND MEMBER_ID=#{memberId}
+        LIMIT 1
+    </select>
+    <delete id="removeChecklist" parameterType="int">
+        DELETE
+        FROM CHECKLIST
+        WHERE CHECKLIST_ID = #{checklistId}
+          AND NOT EXISTS (SELECT 1
+                          FROM check_items
+                          WHERE checklist_id = #{checklistId})
+    </delete>
+</mapper>

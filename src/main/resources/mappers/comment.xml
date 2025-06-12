@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.oopsw.selfit.repository.CommentsRepository">
+    <select id="getComments"
+            parameterType="map"
+            resultType="com.oopsw.selfit.dto.Comment">
+        SELECT M.NICKNAME,
+               M.PROFILE_IMG,
+               C.COMMENT_CREATED_DATE,
+               C.COMMENT_CONTENT
+        FROM COMMENTS C
+                 JOIN
+             MEMBER M ON C.MEMBER_ID = M.MEMBER_ID
+        WHERE C.BOARD_ID = #{boardId}
+        ORDER BY C.COMMENT_CREATED_DATE DESC
+            LIMIT #{limit}
+        OFFSET #{offset};
+    </select>
+
+    <!-- 댓글 등록 -->
+    <insert id="addComment" parameterType="com.oopsw.selfit.dto.Comment">
+        INSERT INTO COMMENTS
+            (COMMENT_CONTENT, COMMENT_CREATED_DATE, BOARD_ID, MEMBER_ID)
+        VALUES (#{commentContent}, SYSDATE(), #{boardId}, #{memberId})
+    </insert>
+
+    <select id="getMemberImg" parameterType="com.oopsw.selfit.dto.Member">
+        SELECT PROFILE_IMG, NICKNAME
+        FROM MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </select>
+</mapper>
