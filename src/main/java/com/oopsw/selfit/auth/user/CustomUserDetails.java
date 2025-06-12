@@ -55,4 +55,9 @@ public class CustomUserDetails implements UserDetails, AuthenticatedUser {
 	public int getMemberId() {
 		return user.getMemberId();
 	}
+
+	@Override
+	public String getEmail() {
+		return user.getEmail();
+	}
 }

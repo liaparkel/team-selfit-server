@@ -6,16 +6,23 @@ import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
+import org.springframework.web.filter.CorsFilter;
 
 import com.google.gson.Gson;
+import com.oopsw.selfit.auth.jwt.JwtAuthenticationFilter;
+import com.oopsw.selfit.auth.jwt.JwtBasicAuthenticationFilter;
 import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
+import com.oopsw.selfit.repository.MemberRepository;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -27,37 +34,54 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
 	private final Gson gson = new Gson();
+	private final CorsFilter corsFilter;
 
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService) throws
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws
+		Exception {
+		return authenticationConfiguration.getAuthenticationManager();
+	}
+
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService, AuthenticationManager authenticationManager,
+		CorsFilter corsFilter, MemberRepository memberRepository) throws
 		Exception {
 		http.csrf(csrf -> csrf.disable());
 		http
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/board/list").permitAll()
-				.requestMatchers("/board/detail/**").permitAll()
+				.requestMatchers("/api/board/list").permitAll()
+				.requestMatchers("/api/board/detail/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/account/member").permitAll()
-				.requestMatchers("/account/login").permitAll()
-				.requestMatchers("/account/signup").permitAll()
-				.requestMatchers("/account/signup-oauth").permitAll()
 				.requestMatchers("/api/account/member/check-login").permitAll()
-				.requestMatchers("/board/**").hasRole("USER")
-				.requestMatchers("/dashboard/**").hasRole("USER")
-				.requestMatchers("/account/**").hasRole("USER")
+				.requestMatchers("/api/board/**").hasRole("USER")
+				.requestMatchers("/api/dashboard/**").hasRole("USER")
 				.requestMatchers("/api/account/member/**").hasRole("USER")
 				.anyRequest().permitAll()
 			);
 
-		http.formLogin(form -> form
-			.loginPage("/account/login")
-			.loginProcessingUrl("/api/account/login-process")
-			.usernameParameter("loginId")
-			.passwordParameter("loginPassword")
-			.defaultSuccessUrl("/dashboard")
-			.successHandler(successHandler())
-			.failureHandler(failureHandler())
-			.permitAll()
-		);
+		// http.formLogin(form -> form
+		// 	.loginPage("/account/login")
+		// 	.loginProcessingUrl("/api/account/login-process")
+		// 	.usernameParameter("loginId")
+		// 	.passwordParameter("loginPassword")
+		// 	.defaultSuccessUrl("/dashboard")
+		// 	.successHandler(successHandler())
+		// 	.failureHandler(failureHandler())
+		// 	.permitAll()
+		// );
+
+		//always: 항상 새로 생성 if_required: 인증시에만 생성, never: 새로생성안하지만 기존거는 유지
+		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+		//form 로그인 차단
+		http.formLogin(form -> form.disable());
+
+		//http 기본설정 무시
+		http.httpBasic(httpBasic -> httpBasic.disable());
+
+		http.addFilter(corsFilter);
+		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
+		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository));
 
 		http
 			.oauth2Login(oauth2 -> oauth2
@@ -67,13 +91,13 @@ public class SecurityConfig {
 				.failureHandler(oAuth2FailureHandler())
 			);
 
-		http.logout(logout -> logout
-			.logoutUrl("/account/logout")
-			.logoutSuccessUrl("/account/login")
-			.invalidateHttpSession(true)
-			.clearAuthentication(true)
-			.deleteCookies("JSESSIONID")
-		);
+		// http.logout(logout -> logout
+		// 	.logoutUrl("/account/logout")
+		// 	.logoutSuccessUrl("/account/login")
+		// 	.invalidateHttpSession(true)
+		// 	.clearAuthentication(true)
+		// 	.deleteCookies("JSESSIONID")
+		// );
 
 		return http.build();
 
