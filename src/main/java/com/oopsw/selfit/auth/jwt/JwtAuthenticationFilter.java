@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
 		AuthenticationException {
 		log.info("AttemptAuthentication = login try");
-		//로그인 정보 추출
 
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
@@ -65,17 +64,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 		log.info("로그인 성공");
 
-		//3. JWT 작성
-		AuthenticatedUser details = (AuthenticatedUser)authentication.getPrincipal();
+		AuthenticatedUser authenticatedUser = (AuthenticatedUser)authentication.getPrincipal();
 		String jwtToken = JWT.create()
-			.withSubject("selfit " + details.getMemberId())
+			.withSubject(authenticatedUser.getEmail())
 			.withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.TIMEOUT))
-			.withClaim("memberId", details.getMemberId())
+			.withClaim("memberId", authenticatedUser.getMemberId())
 			.sign(Algorithm.HMAC512(JwtProperties.SECRET));
 
 		log.info(jwtToken);
 
-		//4. 웹브라우저에 전달
 		response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 		response.getWriter().println(Map.of("message", "login_ok"));
 
