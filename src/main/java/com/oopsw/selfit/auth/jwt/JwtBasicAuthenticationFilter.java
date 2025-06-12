@@ -3,13 +3,22 @@ package com.oopsw.selfit.auth.jwt;
 //권한 인증 -> header를 기준으로 하고 싶을 때
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
+import com.oopsw.selfit.auth.service.CustomUserDetailsService;
+import com.oopsw.selfit.auth.user.CustomOAuth2User;
 import com.oopsw.selfit.dto.Member;
 import com.oopsw.selfit.repository.MemberRepository;
 
@@ -17,16 +26,22 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
 	private MemberRepository memberRepository;
+	private CustomOAuth2UserService customOAuth2UserService;
+	private CustomUserDetailsService customUserDetailsService;
 
-	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository) {
+	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository, CustomOAuth2UserService customOAuth2UserService,
+		CustomUserDetailsService customUserDetailsService) {
 		super(authenticationManager);
 		this.memberRepository = memberRepository;
+		this.customOAuth2UserService = customOAuth2UserService;
+		this.customUserDetailsService = customUserDetailsService;
 		log.info("JwtBasicAuthenticationFilter");
 	}
 
@@ -56,6 +71,29 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 		if (member == null) {
 			throw new UsernameNotFoundException("잘못된 토큰입니다.");
 		}
+		Authentication authentication;
+
+		if (member.getMemberType().equals("DEFAULT")) {
+
+			UserDetails userDetails = customUserDetailsService.loadUserByUsername(member.getEmail());
+			authentication = new UsernamePasswordAuthenticationToken(
+				userDetails, null, userDetails.getAuthorities()
+			);
+
+		} else {
+			Map<String, Object> attributes = Map.of("email", member.getEmail());
+			CustomOAuth2User oAuth2User = customOAuth2UserService.convertToCustomOAuth2User(attributes);
+
+			authentication = new UsernamePasswordAuthenticationToken(
+				oAuth2User, null, oAuth2User.getAuthorities()
+			);
+
+		}
+
+		HttpSession session = request.getSession(true);
+		session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+			SecurityContextHolder.getContext());
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		chain.doFilter(request, response);
 
