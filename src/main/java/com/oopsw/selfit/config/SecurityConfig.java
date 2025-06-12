@@ -34,16 +34,12 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable());
 		http
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/board/list").permitAll()
-				.requestMatchers("/board/detail/**").permitAll()
+				.requestMatchers("/api/board/list").permitAll()
+				.requestMatchers("/api/board/detail/**").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/account/member").permitAll()
-				.requestMatchers("/account/login").permitAll()
-				.requestMatchers("/account/signup").permitAll()
-				.requestMatchers("/account/signup-oauth").permitAll()
 				.requestMatchers("/api/account/member/check-login").permitAll()
-				.requestMatchers("/board/**").hasRole("USER")
-				.requestMatchers("/dashboard/**").hasRole("USER")
-				.requestMatchers("/account/**").hasRole("USER")
+				.requestMatchers("/api/board/**").hasRole("USER")
+				.requestMatchers("/api/dashboard/**").hasRole("USER")
 				.requestMatchers("/api/account/member/**").hasRole("USER")
 				.anyRequest().permitAll()
 			);
