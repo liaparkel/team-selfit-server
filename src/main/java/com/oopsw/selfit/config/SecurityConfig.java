@@ -63,24 +63,8 @@ public class SecurityConfig {
 				.anyRequest().permitAll()
 			);
 
-		// http.formLogin(form -> form
-		// 	.loginPage("/account/login")
-		// 	.loginProcessingUrl("/api/account/login-process")
-		// 	.usernameParameter("loginId")
-		// 	.passwordParameter("loginPassword")
-		// 	.defaultSuccessUrl("/dashboard")
-		// 	.successHandler(successHandler())
-		// 	.failureHandler(failureHandler())
-		// 	.permitAll()
-		// );
-
-		//always: 항상 새로 생성 if_required: 인증시에만 생성, never: 새로생성안하지만 기존거는 유지
 		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-		//form 로그인 차단
 		http.formLogin(form -> form.disable());
-
-		//http 기본설정 무시
 		http.httpBasic(httpBasic -> httpBasic.disable());
 
 		http.addFilter(corsFilter);
@@ -108,36 +92,6 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public AuthenticationSuccessHandler successHandler() {
-		return (request, response, authentication) -> {
-			response.setStatus(HttpServletResponse.SC_OK);
-			response.setContentType("application/json;charset=UTF-8");
-
-			Map<String, Object> result = new HashMap<>();
-			result.put("message", "로그인 성공");
-			result.put("status", 200);
-
-			gson.toJson(result, response.getWriter());
-		};
-	}
-
-	@Bean
-	public AuthenticationFailureHandler failureHandler() {
-		return (request, response, exception) -> {
-			String loginId = request.getParameter("loginId"); // 사용자가 입력한 로그인 ID
-
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			response.setContentType("application/json;charset=UTF-8");
-
-			Map<String, Object> error = new HashMap<>();
-			error.put("message", "아이디 또는 비밀번호가 올바르지 않습니다.");
-			error.put("status", 401);
-			gson.toJson(error, response.getWriter());
-		};
-	}
-
-	// OAuth2 로그인용 성공 핸들러 추가
-	@Bean
 	public AuthenticationSuccessHandler oAuth2SuccessHandler() {
 		return (request, response, authentication) -> {
 			SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
@@ -158,11 +112,16 @@ public class SecurityConfig {
 	@Bean
 	public AuthenticationFailureHandler oAuth2FailureHandler() {
 		return (request, response, exception) -> {
-			HttpSession session = request.getSession(false);
-			String email = (String)session.getAttribute("email");
-			String name = (String)session.getAttribute("name");
 
-			response.sendRedirect("/account/signup-oauth");
+			Map<String, String> result = new HashMap<>(Map.of("message", "need signup"));
+
+			String email = (String)request.getAttribute("email");
+			String name = (String)request.getAttribute("name");
+			result.put("email", email);
+			result.put("name", name);
+
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.getWriter().println(result);
 		};
 	}
 
