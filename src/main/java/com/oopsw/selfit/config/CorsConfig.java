@@ -19,7 +19,7 @@ public class CorsConfig {
 		config.addAllowedOriginPattern("*");
 		config.addAllowedHeader("*"); //
 		config.addAllowedMethod("*");
-		config.setExposedHeaders(Arrays.asList("Access-Control-Allow-Headers", "Authorization"));
+		config.setExposedHeaders(Arrays.asList("Access-Control-Allow-Headers", "selfitKosta"));
 		source.registerCorsConfiguration("/**", config);
 
 		return new CorsFilter(source);

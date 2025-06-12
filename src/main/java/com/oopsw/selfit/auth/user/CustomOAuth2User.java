@@ -23,6 +23,11 @@ public class CustomOAuth2User implements OAuth2User, AuthenticatedUser {
 	}
 
 	@Override
+	public String getEmail() {
+		return user.getEmail();
+	}
+
+	@Override
 	public Map<String, Object> getAttributes() {
 		return attributes;
 	}

@@ -13,41 +13,44 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oopsw.gjwt.auth.PrincipalDetails;
-import com.oopsw.gjwt.domain.User;
+import com.oopsw.selfit.auth.AuthenticatedUser;
+import com.oopsw.selfit.auth.user.User;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
 	private final AuthenticationManager authenticationManager;
 
+	public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
+		this.authenticationManager = authenticationManager;
+		super.setAuthenticationManager(authenticationManager);
+		setFilterProcessesUrl("/api/account/login-process");
+	}
+
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
 		AuthenticationException {
-		log.info("attemptAuthentication = 로그인 시도");
+		log.info("AttemptAuthentication = login try");
 		//로그인 정보 추출
 
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
-			log.info(request.getInputStream());
-			User u = objectMapper.readValue(request.getInputStream(), User.class);
-			log.info("u.username = " + u.getUsername());
-			log.info("u.password = " + u.getPassword());
+			User user = objectMapper.readValue(request.getInputStream(), User.class);
+			log.info("u.username = {}", user.getEmail());
+			log.info("u.password = {}", user.getPw());
 
-			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(u.getUsername(), u.getPassword());
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user.getEmail(),user.getPw());
 
 			Authentication authenticate = authenticationManager.authenticate(auth);
-			PrincipalDetails details = (PrincipalDetails)authenticate.getPrincipal();
+			AuthenticatedUser principal = (AuthenticatedUser)authenticate.getPrincipal();
 
-			log.info(details.getUser().getEmail());
+			log.info(principal.getMemberId());
 			return authenticate;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -58,19 +61,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
-		Authentication authResult) throws IOException, ServletException {
+		Authentication authentication) throws IOException, ServletException {
 
 		log.info("로그인 성공");
 
 		//3. JWT 작성
-		PrincipalDetails details = (PrincipalDetails)authResult.getPrincipal();
+		AuthenticatedUser details = (AuthenticatedUser)authentication.getPrincipal();
 		String jwtToken = JWT.create()
-			.withSubject(details.getUser().getEmail())
+			.withSubject("selfit " + details.getMemberId())
 			.withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.TIMEOUT))
-			.withClaim("id", details.getUser().getId())
-			.withClaim("username", details.getUser().getUsername())
-			.withClaim("email", details.getUser().getEmail())
-			.sign(Algorithm.HMAC256(JwtProperties.SECRET));
+			.withClaim("memberId", details.getMemberId())
+			.sign(Algorithm.HMAC512(JwtProperties.SECRET));
 
 		log.info(jwtToken);
 
@@ -84,5 +85,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
 		AuthenticationException failed) throws IOException, ServletException {
 		log.info("로그인 실패");
+		response.getWriter().println(Map.of("message", "login_fail"));
 	}
 }

@@ -5,16 +5,13 @@ package com.oopsw.selfit.auth.jwt;
 import java.io.IOException;
 
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.oopsw.gjwt.auth.PrincipalDetails;
-import com.oopsw.gjwt.domain.User;
-import com.oopsw.gjwt.repository.UserRepository;
+import com.oopsw.selfit.dto.Member;
+import com.oopsw.selfit.repository.MemberRepository;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,11 +22,11 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
-	private final UserRepository userRepository;
+	private MemberRepository memberRepository;
 
-	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, UserRepository userRepository) {
+	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository) {
 		super(authenticationManager);
-		this.userRepository = userRepository;
+		this.memberRepository = memberRepository;
 		log.info("JwtBasicAuthenticationFilter");
 	}
 
@@ -39,33 +36,25 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 		ServletException {
 		log.info("doFilterInternal: " + request.getRequestURI());
 
-
 		String jwtToken = request.getHeader(JwtProperties.HEADER_STRING);
 		log.info("doFilterInternal: " + jwtToken);
 
 		//1. jwt 토큰이 있는지 확인
-
 		if (jwtToken == null || jwtToken.trim().isEmpty() || !jwtToken.startsWith(JwtProperties.TOKEN_PREFIX)) {
 			chain.doFilter(request, response);
 			return;
 		}
-
 		//2. jwt 토큰
 		String token = jwtToken.replace(JwtProperties.TOKEN_PREFIX, "");
 
-
 		//3. jwt 서명 확인
-		String username = JWT.require(Algorithm.HMAC256(JwtProperties.SECRET)).build()
-			.verify(token).getClaim("username").asString();
+		int memberId = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build()
+			.verify(token).getClaim("memberId").asInt();
 
 		//4. 유효한 계정 확인
-		if (username != null) {
-			User user = userRepository.findByUsername(username);
-			PrincipalDetails details = new PrincipalDetails(user);
-			Authentication auth = new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
-
-			//세션 접근
-			SecurityContextHolder.getContext().setAuthentication(auth);
+		Member member = memberRepository.getMember(memberId);
+		if (member == null) {
+			throw new UsernameNotFoundException("잘못된 토큰입니다.");
 		}
 
 		chain.doFilter(request, response);
