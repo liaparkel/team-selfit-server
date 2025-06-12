@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.oopsw.selfit.auth.jwt.JwtAuthenticationFilter;
 import com.oopsw.selfit.auth.jwt.JwtBasicAuthenticationFilter;
 import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
+import com.oopsw.selfit.auth.service.CustomUserDetailsService;
 import com.oopsw.selfit.repository.MemberRepository;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,6 +36,8 @@ public class SecurityConfig {
 
 	private final Gson gson = new Gson();
 	private final CorsFilter corsFilter;
+	private CustomOAuth2UserService customOAuth2UserService;
+	private CustomUserDetailsService customUserDetailsService;
 
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws
@@ -44,7 +47,8 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService, AuthenticationManager authenticationManager,
-		CorsFilter corsFilter, MemberRepository memberRepository) throws
+		CorsFilter corsFilter, MemberRepository memberRepository,
+		CustomUserDetailsService customUserDetailsService) throws
 		Exception {
 		http.csrf(csrf -> csrf.disable());
 		http
@@ -81,7 +85,7 @@ public class SecurityConfig {
 
 		http.addFilter(corsFilter);
 		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
-		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository));
+		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService, customUserDetailsService));
 
 		http
 			.oauth2Login(oauth2 -> oauth2
