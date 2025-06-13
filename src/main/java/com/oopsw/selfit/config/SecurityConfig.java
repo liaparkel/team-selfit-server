@@ -26,7 +26,6 @@ import com.oopsw.selfit.auth.service.CustomUserDetailsService;
 import com.oopsw.selfit.repository.MemberRepository;
 
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -67,10 +66,6 @@ public class SecurityConfig {
 		http.formLogin(form -> form.disable());
 		http.httpBasic(httpBasic -> httpBasic.disable());
 
-		http.addFilter(corsFilter);
-		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
-		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService, customUserDetailsService));
-
 		http
 			.oauth2Login(oauth2 -> oauth2
 				.userInfoEndpoint(userInfo -> userInfo
@@ -79,13 +74,9 @@ public class SecurityConfig {
 				.failureHandler(oAuth2FailureHandler())
 			);
 
-		// http.logout(logout -> logout
-		// 	.logoutUrl("/account/logout")
-		// 	.logoutSuccessUrl("/account/login")
-		// 	.invalidateHttpSession(true)
-		// 	.clearAuthentication(true)
-		// 	.deleteCookies("JSESSIONID")
-		// );
+		http.addFilter(corsFilter);
+		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
+		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService, customUserDetailsService));
 
 		return http.build();
 
@@ -96,16 +87,16 @@ public class SecurityConfig {
 		return (request, response, authentication) -> {
 			SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
 
+			response.setStatus(HttpServletResponse.SC_OK);
 			if (savedRequest != null) {
 				String targetUrl = savedRequest.getRedirectUrl();
 				if (!targetUrl.contains("/api/")) {
-					response.sendRedirect(targetUrl);
-					return;
+					response.getWriter().println(Map.of("redirect_url", targetUrl));
 				}
 			}
 
 			// 저장된 요청이 없거나 API 요청인 경우 대시보드로
-			response.sendRedirect("/dashboard");
+			response.getWriter().println(Map.of("redirect_url", "/html/dashboard/dashboard.html"));
 		};
 	}
 
@@ -120,8 +111,9 @@ public class SecurityConfig {
 			result.put("email", email);
 			result.put("name", name);
 
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			response.getWriter().println(result);
+			response.sendRedirect("http://127.0.0.1:8880/html/account/signup-oauth.html");
+			// response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			// response.getWriter().println(result);
 		};
 	}
 
