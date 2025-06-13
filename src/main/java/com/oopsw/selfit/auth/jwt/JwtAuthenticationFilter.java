@@ -1,7 +1,6 @@
 package com.oopsw.selfit.auth.jwt;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,8 +9,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oopsw.selfit.auth.AuthenticatedUser;
 import com.oopsw.selfit.auth.user.User;
@@ -64,12 +61,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 		log.info("로그인 성공");
 
-		AuthenticatedUser authenticatedUser = (AuthenticatedUser)authentication.getPrincipal();
-		String jwtToken = JWT.create()
-			.withSubject(authenticatedUser.getEmail())
-			.withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.TIMEOUT))
-			.withClaim("memberId", authenticatedUser.getMemberId())
-			.sign(Algorithm.HMAC512(JwtProperties.SECRET));
+		String jwtToken = JwtTokenManager.createJwtToken(authentication);
 
 		log.info(jwtToken);
 

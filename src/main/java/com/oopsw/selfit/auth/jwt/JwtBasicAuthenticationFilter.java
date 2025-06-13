@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -26,18 +25,17 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
-	private final MemberRepository memberRepository;
-	private final CustomOAuth2UserService customOAuth2UserService;
-	private final CustomUserDetailsService customUserDetailsService;
+	private MemberRepository memberRepository;
+	private CustomOAuth2UserService customOAuth2UserService;
+	private CustomUserDetailsService customUserDetailsService;
 
-	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository,
-		CustomOAuth2UserService customOAuth2UserService, CustomUserDetailsService customUserDetailsService) {
+	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository, CustomOAuth2UserService customOAuth2UserService,
+		CustomUserDetailsService customUserDetailsService) {
 		super(authenticationManager);
 		this.memberRepository = memberRepository;
 		this.customOAuth2UserService = customOAuth2UserService;
