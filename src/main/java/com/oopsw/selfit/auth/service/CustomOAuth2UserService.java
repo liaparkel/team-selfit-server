@@ -2,7 +2,6 @@ package com.oopsw.selfit.auth.service;
 
 import java.util.Map;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -14,7 +13,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import com.oopsw.selfit.auth.user.CustomOAuth2User;
 import com.oopsw.selfit.auth.user.User;
 import com.oopsw.selfit.dto.LoginInfo;
-import com.oopsw.selfit.dto.Member;
 import com.oopsw.selfit.service.MemberService;
 
 import lombok.RequiredArgsConstructor;
