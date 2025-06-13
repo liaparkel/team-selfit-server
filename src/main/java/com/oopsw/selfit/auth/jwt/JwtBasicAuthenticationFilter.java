@@ -90,9 +90,9 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
 		}
 
-		HttpSession session = request.getSession(true);
-		session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-			SecurityContextHolder.getContext());
+		// HttpSession session = request.getSession(true);
+		// session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+		// 	SecurityContextHolder.getContext());
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		chain.doFilter(request, response);
