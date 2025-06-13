@@ -1,7 +1,7 @@
 package com.oopsw.selfit.config;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,12 +21,12 @@ import org.springframework.web.filter.CorsFilter;
 import com.google.gson.Gson;
 import com.oopsw.selfit.auth.jwt.JwtAuthenticationFilter;
 import com.oopsw.selfit.auth.jwt.JwtBasicAuthenticationFilter;
+import com.oopsw.selfit.auth.jwt.JwtProperties;
+import com.oopsw.selfit.auth.jwt.JwtTokenManager;
 import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
 import com.oopsw.selfit.auth.service.CustomUserDetailsService;
 import com.oopsw.selfit.repository.MemberRepository;
 
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -65,24 +65,8 @@ public class SecurityConfig {
 				.anyRequest().permitAll()
 			);
 
-		// http.formLogin(form -> form
-		// 	.loginPage("/account/login")
-		// 	.loginProcessingUrl("/api/account/login-process")
-		// 	.usernameParameter("loginId")
-		// 	.passwordParameter("loginPassword")
-		// 	.defaultSuccessUrl("/dashboard")
-		// 	.successHandler(successHandler())
-		// 	.failureHandler(failureHandler())
-		// 	.permitAll()
-		// );
-
-		//always: 항상 새로 생성 if_required: 인증시에만 생성, never: 새로생성안하지만 기존거는 유지
 		http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-
-		//form 로그인 차단
 		http.formLogin(form -> form.disable());
-
-		//http 기본설정 무시
 		http.httpBasic(httpBasic -> httpBasic.disable());
 
 		http.addFilter(corsFilter);
@@ -97,74 +81,72 @@ public class SecurityConfig {
 				.failureHandler(oAuth2FailureHandler())
 			);
 
-		// http.logout(logout -> logout
-		// 	.logoutUrl("/account/logout")
-		// 	.logoutSuccessUrl("/account/login")
-		// 	.invalidateHttpSession(true)
-		// 	.clearAuthentication(true)
-		// 	.deleteCookies("JSESSIONID")
-		// );
-
 		return http.build();
 
 	}
 
 	@Bean
-	public AuthenticationSuccessHandler successHandler() {
-		return (request, response, authentication) -> {
-			response.setStatus(HttpServletResponse.SC_OK);
-			response.setContentType("application/json;charset=UTF-8");
-
-			Map<String, Object> result = new HashMap<>();
-			result.put("message", "로그인 성공");
-			result.put("status", 200);
-
-			gson.toJson(result, response.getWriter());
-		};
-	}
-
-	@Bean
-	public AuthenticationFailureHandler failureHandler() {
-		return (request, response, exception) -> {
-			String loginId = request.getParameter("loginId"); // 사용자가 입력한 로그인 ID
-
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			response.setContentType("application/json;charset=UTF-8");
-
-			Map<String, Object> error = new HashMap<>();
-			error.put("message", "아이디 또는 비밀번호가 올바르지 않습니다.");
-			error.put("status", 401);
-			gson.toJson(error, response.getWriter());
-		};
-	}
-
-	// OAuth2 로그인용 성공 핸들러 추가
-	@Bean
 	public AuthenticationSuccessHandler oAuth2SuccessHandler() {
 		return (request, response, authentication) -> {
 			SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
 
-			if (savedRequest != null) {
-				String targetUrl = savedRequest.getRedirectUrl();
-				if (!targetUrl.contains("/api/")) {
-					response.sendRedirect(targetUrl);
-					return;
-				}
-			}
+			String jwtToken = JwtTokenManager.createJwtToken(authentication);
 
-			// 저장된 요청이 없거나 API 요청인 경우 대시보드로
-			response.sendRedirect("/dashboard");
+			response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
+
+			String html = """
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head><meta charset="UTF-8"><title>로그인 처리중</title></head>
+        <body>
+        <script>
+          const token = "%s%s";
+          if (window.opener) {
+            window.opener.postMessage({ token: token }, "http://127.0.0.1:8880");
+            console.log("JWT 전달 완료");
+          }
+          setTimeout(() => window.close(), 300);
+        </script>
+        <p>로그인 처리 중입니다...</p>
+        </body>
+        </html>
+        """.formatted(JwtProperties.TOKEN_PREFIX, jwtToken);
+
+			response.setContentType("text/html;charset=UTF-8");
+			response.getWriter().write(html);
+
 		};
 	}
 
 	@Bean
 	public AuthenticationFailureHandler oAuth2FailureHandler() {
 		return (request, response, exception) -> {
-			HttpSession session = request.getSession(false);
-			String email = (String)session.getAttribute("email");
-			String name = (String)session.getAttribute("name");
 
-			response.sendRedirect("/account/signup-oauth");
+			String email = (String)request.getAttribute("email");
+			String name = (String)request.getAttribute("name");
+
+			String redirectUrl = String.format("http://127.0.0.1:8880/html/account/signup-oauth.html?email=%s&name=%s",
+				URLEncoder.encode(email == null ? "" : email, StandardCharsets.UTF_8),
+				URLEncoder.encode(name == null ? "" : name.replace(" ", ""), StandardCharsets.UTF_8));
+
+			String html = """
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head><meta charset="UTF-8"><title>회원가입</title></head>
+            <body>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({ redirect: "%s" }, "http://127.0.0.1:8880");
+                }
+                setTimeout(() => window.close(), 300);
+            </script>
+            <p>로그인 실패 처리 중입니다...</p>
+            </body>
+            </html>
+            """.formatted(redirectUrl);
+
+			response.setContentType("text/html;charset=UTF-8");
+			response.getWriter().write(html);
 		};
 	}
 

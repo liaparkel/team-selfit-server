@@ -1,7 +1,6 @@
 package com.oopsw.selfit.auth.jwt;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,8 +9,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oopsw.selfit.auth.AuthenticatedUser;
 import com.oopsw.selfit.auth.user.User;
@@ -37,7 +34,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
 		AuthenticationException {
 		log.info("AttemptAuthentication = login try");
-		//로그인 정보 추출
 
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
@@ -65,17 +61,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 		log.info("로그인 성공");
 
-		//3. JWT 작성
-		AuthenticatedUser details = (AuthenticatedUser)authentication.getPrincipal();
-		String jwtToken = JWT.create()
-			.withSubject("selfit " + details.getMemberId())
-			.withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.TIMEOUT))
-			.withClaim("memberId", details.getMemberId())
-			.sign(Algorithm.HMAC512(JwtProperties.SECRET));
+		String jwtToken = JwtTokenManager.createJwtToken(authentication);
 
 		log.info(jwtToken);
 
-		//4. 웹브라우저에 전달
 		response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 		response.getWriter().println(Map.of("message", "login_ok"));
 

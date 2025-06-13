@@ -41,8 +41,6 @@ public class MemberRestController {
 	private static final int PAGE_LIMIT = 5;
 	private static Gson gson = new Gson();
 	private final MemberService memberService;
-	private final CustomOAuth2UserService customOAuth2UserService;
-	private final CustomUserDetailsService customUserDetailsService;
 
 	@GetMapping("/member")
 	public ResponseEntity<Member> getMember(@AuthenticationPrincipal AuthenticatedUser loginUser) {
@@ -52,8 +50,6 @@ public class MemberRestController {
 	@PostMapping("/member")
 	public ResponseEntity<Map<String, Boolean>> addMember(@RequestBody Member member, HttpServletRequest request) {
 		memberService.addMember(member);
-		saveSession(member, request);
-
 		return ResponseEntity.ok(Map.of("success", true));
 	}
 
@@ -111,28 +107,4 @@ public class MemberRestController {
 		return ResponseEntity.ok(memberService.getBookmarks(loginUser.getMemberId(), PAGE_LIMIT, offset));
 	}
 
-	private void saveSession(Member member, HttpServletRequest request) {
-		Authentication authentication;
-
-		if (member.getMemberType().equals("DEFAULT")) {
-			UserDetails userDetails = customUserDetailsService.loadUserByUsername(member.getEmail());
-			authentication = new UsernamePasswordAuthenticationToken(
-				userDetails, null, userDetails.getAuthorities()
-			);
-
-		} else {
-			Map<String, Object> attributes = Map.of("email", member.getEmail());
-			CustomOAuth2User oAuth2User = customOAuth2UserService.convertToCustomOAuth2User(attributes);
-
-			authentication = new UsernamePasswordAuthenticationToken(
-				oAuth2User, null, oAuth2User.getAuthorities()
-			);
-
-		}
-
-		HttpSession session = request.getSession(true);
-		session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-			SecurityContextHolder.getContext());
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-	}
 }

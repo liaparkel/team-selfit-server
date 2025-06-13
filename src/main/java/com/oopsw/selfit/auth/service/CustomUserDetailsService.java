@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
-
 	private final MemberRepository memberRepository;
 
 	@Override
@@ -28,6 +27,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 		User user = User.builder().memberId(loginInfo.getMemberId())
 			.email(email)
 			.pw(loginInfo.getPw())
+			.nickname(loginInfo.getNickname())
 			.build();
 
 		return new CustomUserDetails(user);
