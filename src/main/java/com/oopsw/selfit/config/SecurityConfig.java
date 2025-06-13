@@ -54,6 +54,8 @@ public class SecurityConfig {
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/api/board/list").permitAll()
 				.requestMatchers("/api/board/detail/**").permitAll()
+				.requestMatchers("/api/dashboard/food/openSearch").permitAll()
+				.requestMatchers("/api/dashboard/exercise/openSearch").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/account/member").permitAll()
 				.requestMatchers("/api/account/member/check-login").permitAll()
 				.requestMatchers("/api/board/**").hasRole("USER")

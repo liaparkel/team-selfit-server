@@ -74,13 +74,6 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 		if (member == null) {
 			throw new UsernameNotFoundException("잘못된 계정입니다.");
 		}
-
-		//5. ContextHolder에 저장
-		setSecurityContextHolder(member);
-		chain.doFilter(request, response);
-	}
-
-	private void setSecurityContextHolder(Member member) {
 		Authentication authentication;
 
 		if (member.getMemberType().equals("DEFAULT")) {
@@ -95,6 +88,12 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 			authentication = new UsernamePasswordAuthenticationToken(oAuth2User, null, oAuth2User.getAuthorities());
 		}
 
+		// HttpSession session = request.getSession(true);
+		// session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+		// 	SecurityContextHolder.getContext());
 		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		chain.doFilter(request, response);
+
 	}
 }
