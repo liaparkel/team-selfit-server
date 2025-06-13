@@ -1,7 +1,7 @@
 package com.oopsw.selfit.config;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,11 +21,12 @@ import org.springframework.web.filter.CorsFilter;
 import com.google.gson.Gson;
 import com.oopsw.selfit.auth.jwt.JwtAuthenticationFilter;
 import com.oopsw.selfit.auth.jwt.JwtBasicAuthenticationFilter;
+import com.oopsw.selfit.auth.jwt.JwtProperties;
+import com.oopsw.selfit.auth.jwt.JwtTokenManager;
 import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
 import com.oopsw.selfit.auth.service.CustomUserDetailsService;
 import com.oopsw.selfit.repository.MemberRepository;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -68,6 +69,10 @@ public class SecurityConfig {
 		http.formLogin(form -> form.disable());
 		http.httpBasic(httpBasic -> httpBasic.disable());
 
+		http.addFilter(corsFilter);
+		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
+		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService, customUserDetailsService));
+
 		http
 			.oauth2Login(oauth2 -> oauth2
 				.userInfoEndpoint(userInfo -> userInfo
@@ -75,10 +80,6 @@ public class SecurityConfig {
 				.successHandler(oAuth2SuccessHandler())
 				.failureHandler(oAuth2FailureHandler())
 			);
-
-		http.addFilter(corsFilter);
-		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
-		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService, customUserDetailsService));
 
 		return http.build();
 
@@ -89,16 +90,31 @@ public class SecurityConfig {
 		return (request, response, authentication) -> {
 			SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
 
-			response.setStatus(HttpServletResponse.SC_OK);
-			if (savedRequest != null) {
-				String targetUrl = savedRequest.getRedirectUrl();
-				if (!targetUrl.contains("/api/")) {
-					response.getWriter().println(Map.of("redirect_url", targetUrl));
-				}
-			}
+			String jwtToken = JwtTokenManager.createJwtToken(authentication);
 
-			// 저장된 요청이 없거나 API 요청인 경우 대시보드로
-			response.getWriter().println(Map.of("redirect_url", "/html/dashboard/dashboard.html"));
+			response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
+
+			String html = """
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head><meta charset="UTF-8"><title>로그인 처리중</title></head>
+        <body>
+        <script>
+          const token = "%s%s";
+          if (window.opener) {
+            window.opener.postMessage({ token: token }, "http://127.0.0.1:8880");
+            console.log("JWT 전달 완료");
+          }
+          setTimeout(() => window.close(), 300);
+        </script>
+        <p>로그인 처리 중입니다...</p>
+        </body>
+        </html>
+        """.formatted(JwtProperties.TOKEN_PREFIX, jwtToken);
+
+			response.setContentType("text/html;charset=UTF-8");
+			response.getWriter().write(html);
+
 		};
 	}
 
@@ -106,16 +122,31 @@ public class SecurityConfig {
 	public AuthenticationFailureHandler oAuth2FailureHandler() {
 		return (request, response, exception) -> {
 
-			Map<String, String> result = new HashMap<>(Map.of("message", "need signup"));
-
 			String email = (String)request.getAttribute("email");
 			String name = (String)request.getAttribute("name");
-			result.put("email", email);
-			result.put("name", name);
 
-			response.sendRedirect("http://127.0.0.1:8880/html/account/signup-oauth.html");
-			// response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			// response.getWriter().println(result);
+			String redirectUrl = String.format("http://127.0.0.1:8880/html/account/signup-oauth.html?email=%s&name=%s",
+				URLEncoder.encode(email == null ? "" : email, StandardCharsets.UTF_8),
+				URLEncoder.encode(name == null ? "" : name.replace(" ", ""), StandardCharsets.UTF_8));
+
+			String html = """
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head><meta charset="UTF-8"><title>회원가입</title></head>
+            <body>
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({ redirect: "%s" }, "http://127.0.0.1:8880");
+                }
+                setTimeout(() => window.close(), 300);
+            </script>
+            <p>로그인 실패 처리 중입니다...</p>
+            </body>
+            </html>
+            """.formatted(redirectUrl);
+
+			response.setContentType("text/html;charset=UTF-8");
+			response.getWriter().write(html);
 		};
 	}
 
