@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -26,7 +25,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -63,36 +61,34 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 		String token = jwtToken.replace(JwtProperties.TOKEN_PREFIX, "");
 
 		//3. jwt 서명 확인
-		int memberId = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build()
-			.verify(token).getClaim("memberId").asInt();
+		int memberId = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET))
+			.build()
+			.verify(token)
+			.getClaim("memberId")
+			.asInt();
 
 		//4. 유효한 계정 확인
 		Member member = memberRepository.getMember(memberId);
 		if (member == null) {
-			throw new UsernameNotFoundException("잘못된 토큰입니다.");
+			throw new UsernameNotFoundException("잘못된 계정입니다.");
 		}
 		Authentication authentication;
 
 		if (member.getMemberType().equals("DEFAULT")) {
 
 			UserDetails userDetails = customUserDetailsService.loadUserByUsername(member.getEmail());
-			authentication = new UsernamePasswordAuthenticationToken(
-				userDetails, null, userDetails.getAuthorities()
-			);
+			authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
 		} else {
 			Map<String, Object> attributes = Map.of("email", member.getEmail());
 			CustomOAuth2User oAuth2User = customOAuth2UserService.convertToCustomOAuth2User(attributes);
 
-			authentication = new UsernamePasswordAuthenticationToken(
-				oAuth2User, null, oAuth2User.getAuthorities()
-			);
-
+			authentication = new UsernamePasswordAuthenticationToken(oAuth2User, null, oAuth2User.getAuthorities());
 		}
 
-		HttpSession session = request.getSession(true);
-		session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-			SecurityContextHolder.getContext());
+		// HttpSession session = request.getSession(true);
+		// session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+		// 	SecurityContextHolder.getContext());
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		chain.doFilter(request, response);

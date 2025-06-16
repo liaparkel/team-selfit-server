@@ -22,13 +22,28 @@ public class CustomUserDetails implements UserDetails, AuthenticatedUser {
 	}
 
 	@Override
-	public String getPassword() {
-		return user.getPw();
+	public int getMemberId() {
+		return user.getMemberId();
+	}
+
+	@Override
+	public String getEmail() {
+		return user.getEmail();
+	}
+
+	@Override
+	public String getNickname() {
+		return user.getNickname();
 	}
 
 	@Override
 	public String getUsername() {
 		return user.getEmail();
+	}
+
+	@Override
+	public String getPassword() {
+		return user.getPw();
 	}
 
 	@Override
@@ -51,13 +66,4 @@ public class CustomUserDetails implements UserDetails, AuthenticatedUser {
 		return UserDetails.super.isEnabled();
 	}
 
-	@Override
-	public int getMemberId() {
-		return user.getMemberId();
-	}
-
-	@Override
-	public String getEmail() {
-		return user.getEmail();
-	}
 }

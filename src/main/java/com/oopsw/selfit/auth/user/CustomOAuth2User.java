@@ -28,6 +28,16 @@ public class CustomOAuth2User implements OAuth2User, AuthenticatedUser {
 	}
 
 	@Override
+	public String getNickname() {
+		return user.getNickname();
+	}
+
+	@Override
+	public String getName() {
+		return user.getEmail();
+	}
+
+	@Override
 	public Map<String, Object> getAttributes() {
 		return attributes;
 	}
@@ -35,11 +45,6 @@ public class CustomOAuth2User implements OAuth2User, AuthenticatedUser {
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return List.of(new SimpleGrantedAuthority(user.getRole()));
-	}
-
-	@Override
-	public String getName() {
-		return user.getEmail();
 	}
 
 }

@@ -8,7 +8,7 @@
         WHERE MEMBER_ID = #{memberId}
     </select>
     <select id="getLoginInfo" resultType="com.oopsw.selfit.dto.LoginInfo">
-        SELECT MEMBER_ID, PW
+        SELECT MEMBER_ID, PW, NICKNAME
         FROM MEMBER
         WHERE EMAIL = #{email}
     </select>
