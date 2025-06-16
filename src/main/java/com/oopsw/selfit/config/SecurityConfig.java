@@ -1,8 +1,5 @@
 package com.oopsw.selfit.config;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,8 +11,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
-import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.web.filter.CorsFilter;
 
 import com.google.gson.Gson;
@@ -70,7 +65,7 @@ public class SecurityConfig {
 		http.httpBasic(httpBasic -> httpBasic.disable());
 
 		http.addFilter(corsFilter);
-		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
+		http.addFilter(new JwtAuthenticationFilter(authenticationManager, customOAuth2UserService));
 		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService, customUserDetailsService));
 
 		http
@@ -88,10 +83,7 @@ public class SecurityConfig {
 	@Bean
 	public AuthenticationSuccessHandler oAuth2SuccessHandler() {
 		return (request, response, authentication) -> {
-			SavedRequest savedRequest = new HttpSessionRequestCache().getRequest(request, response);
-
 			String jwtToken = JwtTokenManager.createJwtToken(authentication);
-
 			response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 
 			String html = """
@@ -103,9 +95,8 @@ public class SecurityConfig {
           const token = "%s%s";
           if (window.opener) {
             window.opener.postMessage({ token: token }, "http://127.0.0.1:8880");
-            console.log("JWT 전달 완료");
           }
-          setTimeout(() => window.close(), 300);
+          setTimeout(() => window.close(), 100);
         </script>
         <p>로그인 처리 중입니다...</p>
         </body>
@@ -121,14 +112,10 @@ public class SecurityConfig {
 	@Bean
 	public AuthenticationFailureHandler oAuth2FailureHandler() {
 		return (request, response, exception) -> {
-
 			String email = (String)request.getAttribute("email");
 			String name = (String)request.getAttribute("name");
-
-			String redirectUrl = String.format("http://127.0.0.1:8880/html/account/signup-oauth.html?email=%s&name=%s",
-				URLEncoder.encode(email == null ? "" : email, StandardCharsets.UTF_8),
-				URLEncoder.encode(name == null ? "" : name.replace(" ", ""), StandardCharsets.UTF_8));
-
+			String redirectUrl = "http://127.0.0.1:8880/html/account/signup-oauth.html";
+			
 			String html = """
             <!DOCTYPE html>
             <html lang="ko">
@@ -136,14 +123,14 @@ public class SecurityConfig {
             <body>
             <script>
                 if (window.opener) {
-                    window.opener.postMessage({ redirect: "%s" }, "http://127.0.0.1:8880");
+                    window.opener.postMessage({ redirect: "%s", email: "%s", name: "%s" }, "http://127.0.0.1:8880");
                 }
-                setTimeout(() => window.close(), 300);
+                setTimeout(() => window.close(), 100);
             </script>
-            <p>로그인 실패 처리 중입니다...</p>
+            <p> 처리 중입니다...</p>
             </body>
             </html>
-            """.formatted(redirectUrl);
+            """.formatted(redirectUrl, email, name);
 
 			response.setContentType("text/html;charset=UTF-8");
 			response.getWriter().write(html);
