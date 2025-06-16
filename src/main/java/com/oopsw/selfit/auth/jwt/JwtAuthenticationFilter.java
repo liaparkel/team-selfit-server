@@ -7,11 +7,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.oopsw.selfit.auth.AuthenticatedUser;
-import com.oopsw.selfit.auth.user.User;
+import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
+import com.oopsw.selfit.auth.user.CustomOAuth2User;
+import com.oopsw.selfit.dto.Member;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,9 +25,12 @@ import lombok.extern.log4j.Log4j2;
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
 	private final AuthenticationManager authenticationManager;
+	private final CustomOAuth2UserService customOAuth2UserService;
 
-	public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
+	public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
+		CustomOAuth2UserService customOAuth2UserService) {
 		this.authenticationManager = authenticationManager;
+		this.customOAuth2UserService = customOAuth2UserService;
 		super.setAuthenticationManager(authenticationManager);
 		setFilterProcessesUrl("/api/account/login-process");
 	}
@@ -37,17 +42,21 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
-			User user = objectMapper.readValue(request.getInputStream(), User.class);
-			log.info("u.username = {}", user.getEmail());
-			log.info("u.password = {}", user.getPw());
+			Member member = objectMapper.readValue(request.getInputStream(), Member.class);
+			log.info("u.username = {}", member.getEmail());
 
-			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user.getEmail(),user.getPw());
+			if (member.getMemberType() == null || member.getMemberType().equals("DEFAULT")) {
+				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(member.getEmail(), member.getPw());
+				return authenticationManager.authenticate(auth);
+			}
 
-			Authentication authenticate = authenticationManager.authenticate(auth);
-			AuthenticatedUser principal = (AuthenticatedUser)authenticate.getPrincipal();
+			CustomOAuth2User oAuth2User = customOAuth2UserService.convertToCustomOAuth2User(
+				Map.of("email", member.getEmail()));
 
-			log.info(principal.getMemberId());
-			return authenticate;
+			return new OAuth2AuthenticationToken(oAuth2User,
+				oAuth2User.getAuthorities(),
+				"google");
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
