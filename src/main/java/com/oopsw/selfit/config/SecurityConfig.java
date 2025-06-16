@@ -46,7 +46,8 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService, AuthenticationManager authenticationManager,
+	public SecurityFilterChain filterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService,
+		AuthenticationManager authenticationManager,
 		CorsFilter corsFilter, MemberRepository memberRepository,
 		CustomUserDetailsService customUserDetailsService) throws
 		Exception {
