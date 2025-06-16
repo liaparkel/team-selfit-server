@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			Member member = objectMapper.readValue(request.getInputStream(), Member.class);
 			log.info("u.username = {}", member.getEmail());
 
-			if (member.getMemberType().equals("DEFAULT")) {
+			if (member.getMemberType() == null || member.getMemberType().equals("DEFAULT")) {
 				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(member.getEmail(), member.getPw());
 				return authenticationManager.authenticate(auth);
 			}
