@@ -40,28 +40,29 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		AuthenticationException {
 		log.info("AttemptAuthentication = login try");
 
-		try {
+
 			ObjectMapper objectMapper = new ObjectMapper();
-			Member member = objectMapper.readValue(request.getInputStream(), Member.class);
-			log.info("u.username = {}", member.getEmail());
-
-			if (member.getMemberType() == null || member.getMemberType().equals("DEFAULT")) {
-				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(member.getEmail(), member.getPw());
-				return authenticationManager.authenticate(auth);
-			}
-
-			CustomOAuth2User oAuth2User = customOAuth2UserService.convertToCustomOAuth2User(
-				Map.of("email", member.getEmail()));
-
-			return new OAuth2AuthenticationToken(oAuth2User,
-				oAuth2User.getAuthorities(),
-				"google");
-
+		Member member = null;
+		try {
+			member = objectMapper.readValue(request.getInputStream(), Member.class);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 
-		return null;
+		log.info("u.username = {}", member.getEmail());
+
+		if (member.getMemberType() == null || member.getMemberType().equals("DEFAULT")) {
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(member.getEmail(), member.getPw());
+			return authenticationManager.authenticate(auth);
+		}
+
+		CustomOAuth2User oAuth2User = customOAuth2UserService.convertToCustomOAuth2User(
+			Map.of("email", member.getEmail()));
+
+		return new OAuth2AuthenticationToken(oAuth2User,
+			oAuth2User.getAuthorities(),
+			"google");
+
 	}
 
 	@Override
@@ -83,6 +84,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
 		AuthenticationException failed) throws IOException, ServletException {
 		log.info("로그인 실패");
+		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		response.getWriter().println(Map.of("message", "login_fail"));
 	}
 }
