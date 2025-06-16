@@ -53,8 +53,11 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable());
 		http
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/api/board/list").permitAll()
-				.requestMatchers("/api/board/detail/**").permitAll()
+				.requestMatchers(HttpMethod.GET,
+					"/api/board/list",
+					"/api/board/*",
+					"/api/board/comments")
+				.permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/account/member").permitAll()
 				.requestMatchers("/api/account/member/check-login").permitAll()
 				.requestMatchers("/api/board/**").hasRole("USER")
@@ -85,7 +88,9 @@ public class SecurityConfig {
 
 		http.addFilter(corsFilter);
 		http.addFilter(new JwtAuthenticationFilter(authenticationManager));
-		http.addFilter(new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService, customUserDetailsService));
+		http.addFilter(
+			new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService,
+				customUserDetailsService));
 
 		http
 			.oauth2Login(oauth2 -> oauth2
