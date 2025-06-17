@@ -86,9 +86,6 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 			authentication = new UsernamePasswordAuthenticationToken(oAuth2User, null, oAuth2User.getAuthorities());
 		}
 
-		// HttpSession session = request.getSession(true);
-		// session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-		// 	SecurityContextHolder.getContext());
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		chain.doFilter(request, response);
