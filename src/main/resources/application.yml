@@ -5,6 +5,9 @@ spring:
   application:
     name: selfit
 
+  config:
+    import: optional:file:.env[.properties]
+
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://${DB_IP}:3306/${DB_NAME}?characterEncoding=UTF-8
