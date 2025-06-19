@@ -117,7 +117,7 @@ public class SecurityConfig {
 			String email = (String)request.getAttribute("email");
 			String name = (String)request.getAttribute("name");
 			String redirectUrl = "http://127.0.0.1:8880/html/account/signup-oauth.html";
-			
+
 			String html = """
             <!DOCTYPE html>
             <html lang="ko">
