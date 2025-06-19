@@ -2,6 +2,7 @@ package com.oopsw.selfit.auth.jwt;
 
 import java.util.Date;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
 
 import com.auth0.jwt.JWT;
@@ -16,6 +17,7 @@ public class JwtTokenManager {
 			.withSubject(authenticatedUser.getEmail())
 			.withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.TIMEOUT))
 			.withClaim("memberId", authenticatedUser.getMemberId())
-			.sign(Algorithm.HMAC512(JwtProperties.SECRET));
+			.sign(Algorithm.HMAC512(JwtProperties.SECRET.getBytes()));
 	}
+
 }

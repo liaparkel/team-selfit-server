@@ -51,10 +51,11 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.GET,
 					"/api/board/list",
 					"/api/board/*",
-					"/api/board/comments")
+					"/api/board/comments",
+					"/api/account/member/check-login")
 				.permitAll()
-				.requestMatchers(HttpMethod.POST, "/api/account/member").permitAll()
-				.requestMatchers("/api/account/member/check-login").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/account/member","/api/dashboard/food/openSearch",
+					"/api/dashboard/exercise/openSearch").permitAll()
 				.requestMatchers("/api/board/**").hasRole("USER")
 				.requestMatchers("/api/dashboard/**").hasRole("USER")
 				.requestMatchers("/api/account/member/**").hasRole("USER")
@@ -116,7 +117,7 @@ public class SecurityConfig {
 			String email = (String)request.getAttribute("email");
 			String name = (String)request.getAttribute("name");
 			String redirectUrl = "http://127.0.0.1:8880/html/account/signup-oauth.html";
-			
+
 			String html = """
             <!DOCTYPE html>
             <html lang="ko">

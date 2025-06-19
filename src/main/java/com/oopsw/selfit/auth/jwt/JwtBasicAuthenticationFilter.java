@@ -25,9 +25,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j2
+@Slf4j
 public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
 	private MemberRepository memberRepository;
@@ -86,9 +86,6 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 			authentication = new UsernamePasswordAuthenticationToken(oAuth2User, null, oAuth2User.getAuthorities());
 		}
 
-		// HttpSession session = request.getSession(true);
-		// session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-		// 	SecurityContextHolder.getContext());
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 
 		chain.doFilter(request, response);
