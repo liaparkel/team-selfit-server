@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.oopsw</groupId>
     <artifactId>selfit</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0</version>
     <name>selfit</name>
     <description>selfit</description>
     <url/>
@@ -152,7 +152,10 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
 
