@@ -30,12 +30,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
-	private MemberRepository memberRepository;
-	private CustomOAuth2UserService customOAuth2UserService;
-	private CustomUserDetailsService customUserDetailsService;
+	private final MemberRepository memberRepository;
+	private final CustomOAuth2UserService customOAuth2UserService;
+	private final CustomUserDetailsService customUserDetailsService;
 
-	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository, CustomOAuth2UserService customOAuth2UserService,
-		CustomUserDetailsService customUserDetailsService) {
+	public JwtBasicAuthenticationFilter(AuthenticationManager authenticationManager, MemberRepository memberRepository,
+		CustomOAuth2UserService customOAuth2UserService, CustomUserDetailsService customUserDetailsService) {
 		super(authenticationManager);
 		this.memberRepository = memberRepository;
 		this.customOAuth2UserService = customOAuth2UserService;
@@ -54,7 +54,7 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
 		//1. jwt 토큰이 있는지 확인
 		if (jwtToken == null || jwtToken.trim().isEmpty() || !jwtToken.startsWith(JwtProperties.TOKEN_PREFIX)) {
-			chain.doFilter(request, response);
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized: No JWT token found");
 			return;
 		}
 		//2. jwt 토큰
