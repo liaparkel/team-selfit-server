@@ -36,7 +36,7 @@ public class MemberRestController {
 	}
 
 	@PostMapping("/member")
-	public ResponseEntity<Map<String, Boolean>> addMember(@RequestBody Member member, HttpServletRequest request) {
+	public ResponseEntity<Map<String, Boolean>> addMember(@RequestBody Member member) {
 		memberService.addMember(member);
 		return ResponseEntity.ok(Map.of("success", true));
 	}
