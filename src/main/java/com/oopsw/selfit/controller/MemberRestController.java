@@ -4,12 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,18 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.oopsw.selfit.auth.AuthenticatedUser;
-import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
-import com.oopsw.selfit.auth.service.CustomUserDetailsService;
-import com.oopsw.selfit.auth.user.CustomOAuth2User;
 import com.oopsw.selfit.dto.Bookmark;
 import com.oopsw.selfit.dto.Member;
 import com.oopsw.selfit.service.MemberService;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -39,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 public class MemberRestController {
 
 	private static final int PAGE_LIMIT = 5;
-	private static Gson gson = new Gson();
 	private final MemberService memberService;
 
 	@GetMapping("/member")
@@ -48,7 +36,7 @@ public class MemberRestController {
 	}
 
 	@PostMapping("/member")
-	public ResponseEntity<Map<String, Boolean>> addMember(@RequestBody Member member, HttpServletRequest request) {
+	public ResponseEntity<Map<String, Boolean>> addMember(@RequestBody Member member) {
 		memberService.addMember(member);
 		return ResponseEntity.ok(Map.of("success", true));
 	}
@@ -66,38 +54,24 @@ public class MemberRestController {
 	}
 
 	@PostMapping("/check-email")
-	public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestBody String jsonData) {
-		String email = gson.fromJson(jsonData, JsonObject.class)
-			.get("email")
-			.getAsString();
-
-		return ResponseEntity.ok(Map.of("result", memberService.isEmailExists(email)));
+	public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestBody Map<String, String> param) {
+		return ResponseEntity.ok(Map.of("result", memberService.isEmailExists(param.get("email"))));
 	}
 
 	@PostMapping("/check-nickname")
-	public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestBody String jsonData) {
-		String nickname = gson.fromJson(jsonData, JsonObject.class)
-			.get("nickname")
-			.getAsString();
-
-		return ResponseEntity.ok(Map.of("result", memberService.isNicknameExists(nickname)));
+	public ResponseEntity<Map<String, Boolean>> checkNickname(@RequestBody Map<String, String> param) {
+		return ResponseEntity.ok(Map.of("result", memberService.isNicknameExists(param.get("nickname"))));
 	}
 
 	@PostMapping("/member/check-pw")
 	public ResponseEntity<Map<String, Boolean>> checkPw(@AuthenticationPrincipal AuthenticatedUser loginUser,
-		@RequestBody String jsonData) {
-		String pw = gson.fromJson(jsonData, JsonObject.class)
-			.get("pw")
-			.getAsString();
-		return ResponseEntity.ok(Map.of("success", memberService.checkPw(loginUser.getMemberId(), pw)));
+		@RequestBody Map<String, String> param) {
+		return ResponseEntity.ok(Map.of("success", memberService.checkPw(loginUser.getMemberId(), param.get("pw"))));
 	}
 
 	@GetMapping("/member/check-login")
 	public ResponseEntity<Map<String, Boolean>> checkLoginStatus(@AuthenticationPrincipal AuthenticatedUser loginUser) {
-		boolean result = false;
-		if (loginUser != null) {
-			result = true;
-		}
+		boolean result = (loginUser != null);
 		return ResponseEntity.ok(Map.of("result", result));
 	}
 
