@@ -38,10 +38,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws
 		AuthenticationException {
-		log.info("AttemptAuthentication = login try");
-
-
-			ObjectMapper objectMapper = new ObjectMapper();
+		log.info("attemptAuthentication");
+		ObjectMapper objectMapper = new ObjectMapper();
 		Member member = null;
 		try {
 			member = objectMapper.readValue(request.getInputStream(), Member.class);
@@ -49,32 +47,23 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			throw new RuntimeException(e);
 		}
 
-		log.info("u.username = {}", member.getEmail());
-
 		if (member.getMemberType() == null || member.getMemberType().equals("DEFAULT")) {
-			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(member.getEmail(), member.getPw());
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(member.getEmail(),
+				member.getPw());
 			return authenticationManager.authenticate(auth);
 		}
 
 		CustomOAuth2User oAuth2User = customOAuth2UserService.convertToCustomOAuth2User(
 			Map.of("email", member.getEmail()));
 
-		return new OAuth2AuthenticationToken(oAuth2User,
-			oAuth2User.getAuthorities(),
-			"google");
+		return new OAuth2AuthenticationToken(oAuth2User, oAuth2User.getAuthorities(), "google");
 
 	}
 
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
 		Authentication authentication) throws IOException, ServletException {
-
-		log.info("로그인 성공");
-
 		String jwtToken = JwtTokenManager.createJwtToken(authentication);
-
-		log.info(jwtToken);
-
 		response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 		response.getWriter().println(Map.of("message", "login_ok"));
 
@@ -83,7 +72,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	@Override
 	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
 		AuthenticationException failed) throws IOException, ServletException {
-		log.info("로그인 실패");
 		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		response.getWriter().println(Map.of("message", "login_fail"));
 	}

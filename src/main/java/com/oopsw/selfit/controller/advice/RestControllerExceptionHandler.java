@@ -85,5 +85,11 @@ public class RestControllerExceptionHandler {
 		return buildResponse(request, HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류: 데이터베이스 처리 중 문제가 발생했습니다.");
 	}
 
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<CustomErrorResponse> handleException(Exception e, HttpServletRequest request) {
+		log.error("Exception error: {}", e.getMessage(), e);
+		return buildResponse(request, HttpStatus.INTERNAL_SERVER_ERROR, "서버 오류: 알수 없는 에러가 발생했습니다");
+	}
+
 }
 

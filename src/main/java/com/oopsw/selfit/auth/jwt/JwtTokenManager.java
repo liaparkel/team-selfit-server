@@ -2,7 +2,6 @@ package com.oopsw.selfit.auth.jwt;
 
 import java.util.Date;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
 
 import com.auth0.jwt.JWT;
@@ -20,4 +19,7 @@ public class JwtTokenManager {
 			.sign(Algorithm.HMAC512(JwtProperties.SECRET.getBytes()));
 	}
 
+	public static int checkJwtToken(String token) {
+		return JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token).getClaim("memberId").asInt();
+	}
 }
