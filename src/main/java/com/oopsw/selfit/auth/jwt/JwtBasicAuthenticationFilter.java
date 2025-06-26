@@ -3,7 +3,6 @@ package com.oopsw.selfit.auth.jwt;
 //권한 인증 -> header를 기준으로 하고 싶을 때
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,9 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 
-	private static final List<String> PUBLIC_PATHS = List.of("/api/board/list", "/api/board/*", "/api/board/comments",
-		"/api/account/member/check-login", "/api/account/member", "/api/dashboard/food/openSearch",
-		"/api/dashboard/exercise/openSearch");
 	private final MemberRepository memberRepository;
 	private final CustomOAuth2UserService customOAuth2UserService;
 	private final CustomUserDetailsService customUserDetailsService;
