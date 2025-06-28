@@ -62,7 +62,7 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 			String token = jwtToken.replace(JwtProperties.TOKEN_PREFIX, "");
 
 			//3. jwt 서명 확인
-			int memberId = JwtTokenManager.checkJwtToken(token);
+			int memberId = JwtTokenManager.validateJwtToken(token);
 
 			//4. 유효한 계정 확인(DB조회)
 			Member member = memberRepository.getMember(memberId);

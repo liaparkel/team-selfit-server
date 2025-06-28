@@ -19,7 +19,7 @@ public class JwtTokenManager {
 			.sign(Algorithm.HMAC512(JwtProperties.SECRET.getBytes()));
 	}
 
-	public static int checkJwtToken(String token) {
+	public static int validateJwtToken(String token) {
 		return JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token).getClaim("memberId").asInt();
 	}
 }
