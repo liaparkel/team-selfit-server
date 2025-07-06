@@ -25,11 +25,11 @@ public class RefreshToken {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 
-	@Column(nullable = false, length = 512)
-	private String token;
-
 	@Column(unique = true, length = 128)
 	private String jti;
+
+	@Column(nullable = false)
+	private int used;
 
 	@Column(nullable = false)
 	private Date expiresAt;

@@ -15,11 +15,9 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
 import com.oopsw.selfit.auth.service.CustomUserDetailsService;
 import com.oopsw.selfit.auth.user.CustomOAuth2User;
-import com.oopsw.selfit.domain.RefreshToken;
 import com.oopsw.selfit.dto.Member;
 import com.oopsw.selfit.repository.MemberRepository;
 import com.oopsw.selfit.service.RefreshTokenService;
@@ -109,36 +107,10 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 	}
 
 	private boolean refreshJwtAccessToken(AuthResult result) throws IOException {
-
 		try {
-			//1. refreshToken이 있는지 확인
-			String refreshToken = result.getRefreshToken();
-			if (refreshToken == null || refreshToken.trim().isEmpty()) {
-				throw new RuntimeException("refreshToken is invalid");
-			}
-
-			//2. refreshToken이 유효한 jwt인지, 유효기간이 넘었는지 확인
-			RefreshTokenManager.validateRefreshToken(result.getRefreshToken());
-
-			//3. refreshToken이 db에서 있는지 조회(jti로 조회)
-			DecodedJWT decode = JWT.decode(refreshToken);
-			String jti = decode.getClaim("jti").asString();
-			RefreshToken oldRefreshToken = refreshTokenService.findByJti(jti);
-			if (oldRefreshToken == null) {
-				throw new RuntimeException("refreshToken not found");
-			}
-
-			//4. 새로운 AccessToken 발급 및 refreshToken도 새로 발급
-			String newJwtToken = JwtTokenManager.createJwtToken(result.getMember().getMemberId());
-			String newRefreshToken = RefreshTokenManager.createRefreshToken();
-
-			//5. 기존에 있는 oldRefreshToken 무효화
-			refreshTokenService.rotateRefreshToken(oldRefreshToken, newRefreshToken);
-
-			result.setAccessToken(newJwtToken);
-			result.setRefreshToken(newRefreshToken);
-
+			refreshTokenService.rotateTokensAndCreateNew(result);
 		} catch (RuntimeException e) {
+			e.printStackTrace();
 			return false;
 		}
 
