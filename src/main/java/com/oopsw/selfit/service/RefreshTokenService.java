@@ -38,19 +38,24 @@ public class RefreshTokenService {
 		if (oldRefreshToken.getUsed() == 1) {
 			throw new RuntimeException("refreshToken not found");
 		}
+		System.out.println(result.getMember().getMemberId());
+		System.out.println(oldRefreshToken.getMemberId());
+		if (oldRefreshToken.getMemberId() != result.getMember().getMemberId()) {
+			throw new RuntimeException("invalid refreshToken");
+		}
 
 		//4. 새로운 AccessToken 발급 및 refreshToken도 새로 발급
 		String newJwtToken = JwtTokenManager.createJwtToken(result.getMember().getMemberId());
 		String newRefreshToken = RefreshTokenManager.createRefreshToken();
 
 		//5. 기존에 있는 oldRefreshToken 무효화
-		this.rotateRefreshToken(oldRefreshToken, newRefreshToken);
+		this.rotateRefreshToken(oldRefreshToken, newRefreshToken, oldRefreshToken.getMemberId());
 		result.setAccessToken(newJwtToken);
 		result.setRefreshToken(newRefreshToken);
 	}
 
-	public void saveRefreshToken(String refreshToken) {
-		this.saveRefreshToken(createRefreshToken(refreshToken));
+	public void saveRefreshToken(String refreshToken, int memberId) {
+		this.saveRefreshToken(createRefreshToken(refreshToken, memberId));
 	}
 
 	public void saveRefreshToken(RefreshToken refreshToken) {
@@ -61,14 +66,15 @@ public class RefreshTokenService {
 		return refreshTokenRepository.findByJti(jti);
 	}
 
-	public void rotateRefreshToken(RefreshToken oldToken, String newRefreshToken) {
+	public void rotateRefreshToken(RefreshToken oldToken, String newRefreshToken, int memberId) {
 		oldToken.setUsed(1);
-		refreshTokenRepository.save(this.createRefreshToken(newRefreshToken));
+		refreshTokenRepository.save(this.createRefreshToken(newRefreshToken, memberId));
 	}
 
-	public RefreshToken createRefreshToken(String refreshToken) {
+	public RefreshToken createRefreshToken(String refreshToken, int memberId) {
 		return RefreshToken.builder()
 			.jti(JWT.decode(refreshToken).getClaim("jti").asString())
+			.memberId(memberId)
 			.used(0)
 			.expiresAt(JWT.decode(refreshToken).getExpiresAt())
 			.build();

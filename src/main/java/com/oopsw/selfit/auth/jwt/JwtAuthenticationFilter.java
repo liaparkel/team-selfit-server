@@ -73,7 +73,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 
 		String refreshToken = RefreshTokenManager.createRefreshToken();
-		refreshTokenService.saveRefreshToken(refreshToken);
+		refreshTokenService.saveRefreshToken(refreshToken, authenticatedUser.getMemberId());
 		addRefreshTokenCookie(response, refreshToken);
 
 		response.getWriter().println(Map.of("message", "login_ok"));

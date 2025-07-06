@@ -28,6 +28,9 @@ public class RefreshToken {
 	@Column(unique = true, length = 128)
 	private String jti;
 
+	@Column(unique = true, nullable = false)
+	private int memberId;
+
 	@Column(nullable = false)
 	private int used;
 

@@ -162,26 +162,4 @@ public class JwtBasicAuthenticationFilter extends BasicAuthenticationFilter {
 		return xForwardedFor != null ? xForwardedFor.split(",")[0] : request.getRemoteAddr();
 	}
 
-	private void reissueRefreshToken(AuthResult result) {
-		String refreshToken = result.getRefreshToken();
-		boolean needToReissueRefreshToken = false;
-
-		if (refreshToken == null || refreshToken.trim().isEmpty()) {
-			needToReissueRefreshToken = true;
-		} else {
-			try {
-				RefreshTokenManager.validateRefreshToken(refreshToken);
-			} catch (TokenExpiredException e) {
-				needToReissueRefreshToken = true;
-			} catch (Exception e) {
-				return;
-			}
-		}
-
-		if (needToReissueRefreshToken) {
-			String newRefreshToken = RefreshTokenManager.createRefreshToken();
-			refreshTokenService.saveRefreshToken(newRefreshToken);
-			result.setRefreshToken(newRefreshToken);
-		}
-	}
 }
