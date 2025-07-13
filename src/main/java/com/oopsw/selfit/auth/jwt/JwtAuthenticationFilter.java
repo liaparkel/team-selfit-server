@@ -11,9 +11,11 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oopsw.selfit.auth.AuthenticatedUser;
 import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
 import com.oopsw.selfit.auth.user.CustomOAuth2User;
 import com.oopsw.selfit.dto.Member;
+import com.oopsw.selfit.service.RefreshTokenService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,11 +28,13 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 	private final AuthenticationManager authenticationManager;
 	private final CustomOAuth2UserService customOAuth2UserService;
+	private final RefreshTokenService refreshTokenService;
 
 	public JwtAuthenticationFilter(AuthenticationManager authenticationManager,
-		CustomOAuth2UserService customOAuth2UserService) {
+		CustomOAuth2UserService customOAuth2UserService, RefreshTokenService refreshTokenService) {
 		this.authenticationManager = authenticationManager;
 		this.customOAuth2UserService = customOAuth2UserService;
+		this.refreshTokenService = refreshTokenService;
 		super.setAuthenticationManager(authenticationManager);
 		setFilterProcessesUrl("/api/account/login-process");
 	}
@@ -63,8 +67,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
 		Authentication authentication) throws IOException, ServletException {
-		String jwtToken = JwtTokenManager.createJwtToken(authentication);
+		AuthenticatedUser authenticatedUser = (AuthenticatedUser)authentication.getPrincipal();
+
+		String jwtToken = JwtTokenManager.createJwtToken(authenticatedUser.getMemberId());
 		response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
+
+		String refreshToken = RefreshTokenManager.createRefreshToken();
+		refreshTokenService.saveRefreshToken(refreshToken, authenticatedUser.getMemberId());
+		addRefreshTokenCookie(response, refreshToken);
+
 		response.getWriter().println(Map.of("message", "login_ok"));
 
 	}
@@ -74,5 +85,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		AuthenticationException failed) throws IOException, ServletException {
 		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		response.getWriter().println(Map.of("message", "login_fail"));
+	}
+
+	private void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+		response.setHeader("Set-Cookie",
+			String.format("%s=%s; Max-Age=%d; Path=%s; HttpOnly; SameSite=%s", RefreshTokenProperties.COOKIE,
+				refreshToken, RefreshTokenProperties.TIMEOUT, "/", "Strict"));
 	}
 }

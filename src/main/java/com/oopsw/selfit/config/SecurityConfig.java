@@ -13,7 +13,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.filter.CorsFilter;
 
-import com.google.gson.Gson;
+import com.oopsw.selfit.auth.AuthenticatedUser;
 import com.oopsw.selfit.auth.jwt.JwtAuthenticationFilter;
 import com.oopsw.selfit.auth.jwt.JwtBasicAuthenticationFilter;
 import com.oopsw.selfit.auth.jwt.JwtProperties;
@@ -21,6 +21,7 @@ import com.oopsw.selfit.auth.jwt.JwtTokenManager;
 import com.oopsw.selfit.auth.service.CustomOAuth2UserService;
 import com.oopsw.selfit.auth.service.CustomUserDetailsService;
 import com.oopsw.selfit.repository.MemberRepository;
+import com.oopsw.selfit.service.RefreshTokenService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,11 +29,6 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-	private final Gson gson = new Gson();
-	private final CorsFilter corsFilter;
-	private CustomOAuth2UserService customOAuth2UserService;
-	private CustomUserDetailsService customUserDetailsService;
 
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws
@@ -43,7 +39,7 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http, CustomOAuth2UserService customOAuth2UserService,
 		AuthenticationManager authenticationManager, CorsFilter corsFilter, MemberRepository memberRepository,
-		CustomUserDetailsService customUserDetailsService) throws Exception {
+		CustomUserDetailsService customUserDetailsService, RefreshTokenService refreshTokenService) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.formLogin(form -> form.disable())
@@ -66,10 +62,11 @@ public class SecurityConfig {
 				.permitAll());
 
 		http.addFilter(corsFilter);
-		http.addFilter(new JwtAuthenticationFilter(authenticationManager, customOAuth2UserService));
+		http.addFilter(
+			new JwtAuthenticationFilter(authenticationManager, customOAuth2UserService, refreshTokenService));
 		http.addFilter(
 			new JwtBasicAuthenticationFilter(authenticationManager, memberRepository, customOAuth2UserService,
-				customUserDetailsService));
+				customUserDetailsService, refreshTokenService));
 		http.oauth2Login(oauth2 -> oauth2.userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
 			.successHandler(oAuth2SuccessHandler())
 			.failureHandler(oAuth2FailureHandler()));
@@ -80,7 +77,8 @@ public class SecurityConfig {
 	@Bean
 	public AuthenticationSuccessHandler oAuth2SuccessHandler() {
 		return (request, response, authentication) -> {
-			String jwtToken = JwtTokenManager.createJwtToken(authentication);
+			AuthenticatedUser authenticatedUser = (AuthenticatedUser)authentication.getPrincipal();
+			String jwtToken = JwtTokenManager.createJwtToken(authenticatedUser.getMemberId());
 			response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 
 			String html = """

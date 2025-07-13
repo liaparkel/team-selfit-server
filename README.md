@@ -21,7 +21,7 @@
 <br/>
 
 ## 🏗️ 아키텍처
-![Image](https://github.com/user-attachments/assets/9105cbab-ba96-4b25-b67b-a29fd35c2f4b)
+![Image](./arch.png)
 
 <br/>
 
