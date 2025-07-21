@@ -30,25 +30,19 @@
 ### 🧠 BACKEND
 ![Java](https://img.shields.io/badge/Java-007396?style=flat-square&logo=openjdk&logoColor=white)![버전](https://img.shields.io/badge/22.0.2-555555?style=flat-square)
 ![SpringBoot](https://img.shields.io/badge/SpringBoot-6DB33F?style=flat-square&logo=spring&logoColor=white)![버전](https://img.shields.io/badge/3.4.5-555555?style=flat-square)
-![SpringSecurity](https://img.shields.io/badge/Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)![버전](https://img.shields.io/badge/6.3.1-555555?style=flat-square)
+![SpringSecurity](https://img.shields.io/badge/Spring%20Security-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)![버전](https://img.shields.io/badge/6.3.1-555555?style=flat-square)
 ![JPA](https://img.shields.io/badge/JPA-FF7F50?style=flat-square)![버전](https://img.shields.io/badge/3.1.0-555555?style=flat-square)
 ![MyBatis](https://img.shields.io/badge/MyBatis-1F6CAB?style=flat-square)![버전](https://img.shields.io/badge/3.0.3-555555?style=flat-square)
-![Thymeleaf](https://img.shields.io/badge/Thymeleaf-8BC34A?style=flat-square&logo=thymeleaf)![버전](https://img.shields.io/badge/3.1.1-555555?style=flat-square)
-![Gson](https://img.shields.io/badge/Gson-FF6F00?style=flat-square)![버전](https://img.shields.io/badge/2.8.9-555555?style=flat-square)
-![Lombok](https://img.shields.io/badge/Lombok-800080?style=flat-square)![버전](https://img.shields.io/badge/1.18.30-555555?style=flat-square)
+![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jwt&logoColor=white)
 
 ### 🎨 FRONTEND
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)
-![CSS](https://img.shields.io/badge/CSS-1572B6?style=flat-square&logo=css3&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
-![Bootstrap](https://img.shields.io/badge/Bootstrap-7952B3?style=flat-square&logo=bootstrap&logoColor=white)![버전](https://img.shields.io/badge/5.3.3-555555?style=flat-square)
-![BootstrapIcons](https://img.shields.io/badge/Bootstrap--Icons-000000?style=flat-square)![버전](https://img.shields.io/badge/1.10.5-555555?style=flat-square)
-![Axios](https://img.shields.io/badge/Axios-5A29E4?style=flat-square)![버전](https://img.shields.io/badge/1.10.0-555555?style=flat-square)
-![ApexCharts](https://img.shields.io/badge/ApexCharts.js-FF4560?style=flat-square)![버전](https://img.shields.io/badge/4.7.0-555555?style=flat-square)
-![FullCalendar](https://img.shields.io/badge/FullCalendar.js-00CED1?style=flat-square)![버전](https://img.shields.io/badge/6.1.11-555555?style=flat-square)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=flat-square&logo=axios&logoColor=white)
 
 ### 🛠️ 개발 도구
-![IntelliJ](https://img.shields.io/badge/IDEA-000000?style=flat-square&logo=intellijidea)![버전](https://img.shields.io/badge/2025.1.1.1-555555?style=flat-square)
+![IntelliJ IDEA](https://img.shields.io/badge/IDEA-000000?style=flat-square&logo=intellijidea)![버전](https://img.shields.io/badge/2025.1.1.1-555555?style=flat-square)
 ![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat-square&logo=apachemaven)![버전](https://img.shields.io/badge/3.9.6-555555?style=flat-square)
 ![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=flat-square&logo=mariadb)![버전](https://img.shields.io/badge/10.6.22-555555?style=flat-square)
 ![JUnit5](https://img.shields.io/badge/JUnit5-25A162?style=flat-square&logo=junit5&logoColor=white)
@@ -60,7 +54,6 @@
 ![Google Sheets](https://img.shields.io/badge/Google_Sheets-34A853?style=flat-square&logo=googlesheets&logoColor=white)
 ![draw.io](https://img.shields.io/badge/draw.io-F08705?style=flat-square)
 ![Figma](https://img.shields.io/badge/Figma-F24E1E?style=flat-square&logo=figma&logoColor=white)
-![eXERD](https://img.shields.io/badge/eXERD-0066CC?style=flat-square)
 ![Git](https://img.shields.io/badge/Git-F05032?style=flat-square&logo=git&logoColor=white)
 ![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white)
 
